@@ -162,7 +162,22 @@ namespace _2D_Engine_Sokov
                 }
             }
         }
+        public static void SubmitSprites(Sprite[] sprites)
+        {
+            foreach (Sprite sprite in sprites)
+            {
+                if (sprite == null) return;
 
+                lock (_bufferLock)
+                {
+                    // Добавляем только если спрайт еще не был добавлен
+                    if (!_nextFrameList.Contains(sprite))
+                    {
+                        _nextFrameList.Add(sprite);
+                    }
+                }
+            }
+        }
         public static void EnqueueTextureLoad(Sprite sprite, string path)
         {
             if (sprite == null || string.IsNullOrEmpty(path)) return;

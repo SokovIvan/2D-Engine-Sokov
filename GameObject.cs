@@ -1,28 +1,45 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-
+﻿using Microsoft.Xna.Framework;
 namespace _2D_Engine_Sokov
 {
     public class GameObject
     {
-        // Основные свойства
         public string Tag { get; set; } = "Untagged";
         public bool IsActive { get; set; } = true;
-        public Vector2 Position { get; set; } = Vector2.Zero;
+        public bool GravityEnabled { get; set; } = false;
+        public bool CollisionEnabled { get; set; } = false;
+        public bool IsStatic { get; set; } = false;
+        //public Vector2 Velocity { get; set; } = Vector2.Zero; 
+        //public Vector2 Position { get; set; } = Vector2.Zero;
         public Vector2 Scale { get; set; } = Vector2.One;
+        public Vector2 Size { get; set; } = Vector2.One;
         public float Rotation { get; set; } = 0f;
+        public float Mass { get; set; } = 1f;
         public Vector2 Origin { get; set; } = Vector2.Zero;
         public float LayerDepth { get; set; } = 0f;
-
-        // Компоненты и дочерние объекты
         public GameObject Parent { get; set; }
-        private System.Collections.Generic.List<GameObject> children = new();
+        private List<GameObject> children = new();
+        public bool IsSleeping { get; set; }
+        // В GameObject
+        public Vector2 _lastCollisionNormal;
+        public float _normalStickTime = 0f;
+        // ... существующие свойства ...
+        private Vector2 _position;
+        private readonly object _positionLock = new object();
 
+        public Vector2 Position
+        {
+            get { lock (_positionLock) return _position; }
+            set { lock (_positionLock) _position = value; }
+        }
+
+        // Аналогично для Velocity
+        private Vector2 _velocity;
+        private readonly object _velocityLock = new object();
+        public Vector2 Velocity
+        {
+            get { lock (_velocityLock) return _velocity; }
+            set { lock (_velocityLock) _velocity = value; }
+        }
         // Трансформация
         public Matrix WorldTransform
         {
@@ -37,7 +54,8 @@ namespace _2D_Engine_Sokov
             }
         }
 
-        // Иерархия объектов
+        public bool IsOnGround { get; set; }
+
         public void AddChild(GameObject child)
         {
             child.Parent = this;

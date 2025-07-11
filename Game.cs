@@ -1,4 +1,6 @@
-﻿using Microsoft.Xna.Framework;
+﻿using _2D_Engine_Sokov.GameObjects;
+using _2D_Engine_Sokov.UIElements;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
@@ -12,63 +14,31 @@ namespace _2D_Engine_Sokov
 {
     internal class Game
     {
-        Thread render_thread;
-        Thread logic_thread;
-        Thread ui_thread;
-        Thread physics_thread;
         XMLParser parser;
         private Thread _renderThread;
         public bool _isRunning;
         private readonly LinkedList<GameObject> _gameObjects = new();
+        private readonly LinkedList<UIElement> _UIElements = new();
         private readonly int _targetFps = 60;
         private readonly int _frameTimeMs;
-        Sprite testSprite;
+
+        public static Game instance;
+        public static KeyboardState keyboardState;
+
         public Game()
         {
+            instance = this;
             _frameTimeMs = 1000 / _targetFps;
         }
 
         public void Run()
         {
-            // Инициализация рендер-системы
             RenderSystem.Initialize(800, 600);
             PhysicsSystem.Initialize();
-            // Создание и настройка спрайта
-            testSprite = new Sprite
-            {
-                Position = new Microsoft.Xna.Framework.Vector2(0, 0),
-                Scale = new Microsoft.Xna.Framework.Vector2(0.5f, 0.5f),
-                Size = new Microsoft.Xna.Framework.Vector2(800, 400),
-                LayerDepth = 1,
-                Color = Color.White,
-                CollisionEnabled = true,
-                GravityEnabled = true,
-                Mass = 100.0f,
-                Tag = "testSprite"
-            };
-            testSprite.LoadTexture("C:\\Users\\IvanS\\Pictures\\canvasImage (2).png");
-
-            _gameObjects.AddLast(testSprite);
-
-            var ground = new Sprite
-            {
-                Position = new Microsoft.Xna.Framework.Vector2(-100, 400),
-                Scale = new Microsoft.Xna.Framework.Vector2(2f, 0.5f),
-                Size = new Microsoft.Xna.Framework.Vector2(2000, 100),
-                LayerDepth = 0,
-                Color = Color.Red,
-                CollisionEnabled = true,
-                IsStatic = true,
-                Tag = "testGround"
-            };
-            ground.LoadTexture("C:\\Users\\IvanS\\Pictures\\canvasImage (2).png");
-
-            _gameObjects.AddLast(ground);
-
+            LogicSystem.Initialize();
+            UISystem.Initialize(); 
             _isRunning = true;
             var lastUpdate = System.Environment.TickCount;
-
-            // Основной игровой цикл
             while (_isRunning)
             {
                 var currentTime = System.Environment.TickCount;
@@ -76,59 +46,56 @@ namespace _2D_Engine_Sokov
 
                 if (deltaTime >= _frameTimeMs)
                 {
-                    // Обновление игровой логики
                     Update();
                     lastUpdate = currentTime;
                 }
                 Thread.Sleep(1);
             }
-
-            // Завершение работы
-            RenderSystem.Shutdown();
+            UISystem.Shutdown();
+            LogicSystem.Shutdown();
             PhysicsSystem.Shutdown();
+            RenderSystem.Shutdown();
+
         }
-
-        private void Update()
+        public static void SubmitObject(GameObject gameObject) {
+            instance._gameObjects.AddLast(gameObject);
+        }
+        public static void SubmitUIElement(UIElement uIElement)
         {
-            // Обработка ввода
+            instance._UIElements.AddLast(uIElement);
+        }
+        private void Update()
+        {  
             HandleInput();
-
-            // Отправляем объекты в физическую систему
-            PhysicsSystem.SubmitGameObjects(_gameObjects.ToArray());
-
-            // Ограничиваем максимальную скорость
-            /*foreach (var obj in _gameObjects)
-            {
-                if (obj.IsStatic) continue;
-
-                Vector2 velocity = obj.Velocity;
-                if (velocity.Length() > MAX_SPEED)
-                {
-                    obj.Velocity = Vector2.Normalize(velocity) * MAX_SPEED;
-                }
-            }*/
-
+            LogicUpdate();
+            PhysicsUpdate();
+            UIUpdate();  
             Render();
         }
         private void HandleInput()
         {
-            if (Keyboard.GetState().IsKeyDown(Keys.Space))
+            keyboardState = Keyboard.GetState();
+            if (keyboardState.IsKeyDown(Keys.Escape))
             {
-                // Применяем импульс вместо установки скорости
-                testSprite.Velocity += new Microsoft.Xna.Framework.Vector2(0, -300);
+                Stop();
             }
         }
         private void Render()
         {
-            // Отправляем только активные спрайты
-            // foreach (var sprite in _gameObjects.OfType<Sprite>().Where(s => s.IsActive))
-            //{
-            //    RenderSystem.SubmitSprite(sprite);
-            //}
             RenderSystem.SubmitSprites(_gameObjects.OfType<Sprite>().Where(s => s.IsActive).ToArray());
-
         }
-
+        private void PhysicsUpdate()
+        {
+            PhysicsSystem.SubmitGameObjects(_gameObjects.Where(s => s.IsActive).ToArray());
+        }
+        private void LogicUpdate()
+        {
+            LogicSystem.SubmitGameObjects(_gameObjects.Where(s => s.IsActive).ToArray());
+        }
+        private void UIUpdate()
+        {
+            RenderSystem.SubmitUIElements(_UIElements.Where(s => s.IsActive).ToArray()); 
+        }
         public void Stop()
         {
             _isRunning = false;

@@ -24,6 +24,12 @@ namespace _2D_Engine_Sokov
 
         // Очередь загрузки текстур
         private static readonly ConcurrentQueue<(Sprite, string)> _textureLoadQueue = new();
+        private static readonly ConcurrentQueue<(UIElement, string)> _textureLoadQueueUI = new();
+        // Добавляем камеру
+        private static Camera _camera;
+
+        // В класс RenderSystem добавляем статический список для UI элементов
+        private static readonly List<UIElement> _uiElements = new List<UIElement>();
 
         public static void Initialize(int width, int height)
         {
@@ -38,6 +44,9 @@ namespace _2D_Engine_Sokov
                 };
                 graphics.ApplyChanges();
                 _graphicsDevice = graphics.GraphicsDevice;
+
+
+                _camera = new Camera(new Viewport(0, 0, width, height));
                 _game.Run();
             })
             {
@@ -45,13 +54,51 @@ namespace _2D_Engine_Sokov
                 Name = "RenderThread"
             }.Start();
         }
-
+        // Добавляем метод для доступа к камере
+        public static Camera GetCamera() => _camera;
         public static void Shutdown()
         {
             _isRunning = false;
             _game?.Exit();
         }
+        // Добавляем метод для регистрации UI элементов
+        public static void SubmitUIElement(UIElement element)
+        {
+            if (element == null) return;
 
+            lock (_bufferLock)
+            {
+                if (!_uiElements.Contains(element))
+                {
+                    _uiElements.Add(element);
+                }
+            }
+        }
+        public static void SubmitUIElements(UIElement[] elements)
+        {
+            foreach (UIElement element in elements)
+            {
+                if (element == null) return;
+
+                lock (_bufferLock)
+                {
+                    if (!_uiElements.Contains(element))
+                    {
+                        _uiElements.Add(element);
+                    }
+                }
+            }
+        }
+        // Добавляем метод для удаления UI элементов
+        public static void RemoveUIElement(UIElement element)
+        {
+            if (element == null) return;
+
+            lock (_bufferLock)
+            {
+                _uiElements.Remove(element);
+            }
+        }
         private class RenderGame : Microsoft.Xna.Framework.Game
         {
             private readonly int _width;
@@ -79,6 +126,7 @@ namespace _2D_Engine_Sokov
                 base.Update(gameTime);
             }
 
+            // Модифицируем метод Draw в RenderGame
             protected override void Draw(GameTime gameTime)
             {
                 if (!_isRunning)
@@ -87,26 +135,27 @@ namespace _2D_Engine_Sokov
                     return;
                 }
 
-                // Получение списка спрайтов для рендеринга
                 List<Sprite> renderList;
+                List<UIElement> uiList;
                 lock (_bufferLock)
                 {
                     renderList = _currentRenderList;
+                    uiList = new List<UIElement>(_uiElements);
 
-                    // Меняем буферы местами
                     var temp = _currentRenderList;
                     _currentRenderList = _nextFrameList;
                     _nextFrameList = temp;
                 }
 
-                // Рендеринг
                 _graphicsDevice.Clear(Color.CornflowerBlue);
 
+                // Отрисовка обычных спрайтов
                 if (renderList.Count > 0)
                 {
                     _spriteBatch.Begin(
                         sortMode: SpriteSortMode.FrontToBack,
-                        blendState: BlendState.AlphaBlend
+                        blendState: BlendState.AlphaBlend,
+                        transformMatrix: _camera?.TransformMatrix
                     );
 
                     foreach (var sprite in renderList.OrderBy(s => s.LayerDepth))
@@ -129,11 +178,68 @@ namespace _2D_Engine_Sokov
                     _spriteBatch.End();
                 }
 
+                // Отрисовка UI элементов (без преобразований камеры)
+                if (uiList.Count > 0)
+                {
+                    _spriteBatch.Begin(
+                        sortMode: SpriteSortMode.FrontToBack,
+                        blendState: BlendState.AlphaBlend,
+                        samplerState: SamplerState.PointClamp // Для четкости пикселей
+                    );
+
+                    foreach (var element in uiList.OrderBy(e => e.LayerDepth))
+                    {
+                        if (element.Texture == null || !element.IsActive) continue;
+
+                        var sourceRect = element.SourceRectangle ?? new Rectangle(0, 0, element.Texture.Width, element.Texture.Height);
+
+                        _spriteBatch.Draw(
+                            texture: element.Texture,
+                            position: element.Position,
+                            sourceRectangle: sourceRect,
+                            color: element.Color,
+                            rotation: element.Rotation,
+                            origin: element.Origin,
+                            scale: element.Scale,
+                            effects: element.Effects,
+                            layerDepth: element.LayerDepth
+                        );
+                    }
+                    //DrawDebugBounds(_spriteBatch);
+                    _spriteBatch.End();
+                }
+      
                 base.Draw(gameTime);
             }
+            public static void DrawDebugBounds(SpriteBatch spriteBatch)
+            {
+                foreach (var element in _uiElements.Where(e => e.IsActive))
+                {
+                    var bounds = element.Bounds;
+                    var texture = new Texture2D(spriteBatch.GraphicsDevice, 1, 1);
+                    texture.SetData(new[] { Color.Red });
 
+                    // Рисуем границы
+                    spriteBatch.Draw(texture, new Rectangle(bounds.X, bounds.Y, bounds.Width, 1), Color.Red);
+                    spriteBatch.Draw(texture, new Rectangle(bounds.X, bounds.Y, 1, bounds.Height), Color.Red);
+                    spriteBatch.Draw(texture, new Rectangle(bounds.X, bounds.Y + bounds.Height, bounds.Width, 1), Color.Red);
+                    spriteBatch.Draw(texture, new Rectangle(bounds.X + bounds.Width, bounds.Y, 1, bounds.Height), Color.Red);
+                }
+            }
             private void ProcessTextureLoadRequests()
             {
+                while (_textureLoadQueueUI.TryDequeue(out var request))
+                {
+                    try
+                    {
+                        using var stream = File.OpenRead(request.Item2);
+                        request.Item1.Texture = Texture2D.FromStream(_graphicsDevice, stream);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error loading texture: {ex.Message}");
+                    }
+                }
                 while (_textureLoadQueue.TryDequeue(out var request))
                 {
                     try
@@ -183,7 +289,11 @@ namespace _2D_Engine_Sokov
             if (sprite == null || string.IsNullOrEmpty(path)) return;
             _textureLoadQueue.Enqueue((sprite, path));
         }
-
+        public static void EnqueueTextureLoad(UIElement uIElement, string path)
+        {
+            if (uIElement == null || string.IsNullOrEmpty(path)) return;
+            _textureLoadQueueUI.Enqueue((uIElement, path));
+        }
         public static void ClearFrameBuffer()
         {
             lock (_bufferLock)
@@ -191,5 +301,6 @@ namespace _2D_Engine_Sokov
                 _nextFrameList.Clear();
             }
         }
+
     }
 }

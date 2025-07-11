@@ -1,8 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
+
 namespace _2D_Engine_Sokov
 {
     public class GameObject
     {
+        public string Name { get; set; } = "Unnamed";
         public string Tag { get; set; } = "Untagged";
         public bool IsActive { get; set; } = true;
         public bool GravityEnabled { get; set; } = false;
@@ -68,5 +70,9 @@ namespace _2D_Engine_Sokov
             children.Remove(child);
         }
 
+        public virtual void Update(double deltaTime)
+        {
+            //Console.WriteLine(Tag);
+        }
     }
 }

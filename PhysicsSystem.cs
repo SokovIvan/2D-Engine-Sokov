@@ -19,8 +19,8 @@ namespace _2D_Engine_Sokov
         private static List<GameObject> _nextPhysicsList = _physicsBufferB;
         private static readonly object _bufferLock = new object();
         //private const float GRAVITY = 980f; 
-        private const float MAX_SPEED = 1000f; 
-        private const float GRAVITY = 500f; 
+        public static float MAX_SPEED = 1000f;
+        public static float GRAVITY = 500f; 
         private const float FIXED_TIMESTEP = 1f / 60f; 
         private static Thread _physicsThread;
 

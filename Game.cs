@@ -14,6 +14,8 @@ namespace _2D_Engine_Sokov
 {
     internal class Game
     {
+        private GameLevel _currentLevel;
+
         XMLParser parser;
         private Thread _renderThread;
         public bool _isRunning;
@@ -29,6 +31,7 @@ namespace _2D_Engine_Sokov
         {
             instance = this;
             _frameTimeMs = 1000 / _targetFps;
+            parser = new XMLParser();
         }
 
         public void Run()
@@ -36,7 +39,11 @@ namespace _2D_Engine_Sokov
             RenderSystem.Initialize(800, 600);
             PhysicsSystem.Initialize();
             LogicSystem.Initialize();
-            UISystem.Initialize(); 
+            UISystem.Initialize();
+            RenderSystem.EnableFrustumCulling(true);
+            // Загрузка начального уровня
+            LoadLevel("Content/Levels/Scene_0.xml");
+
             _isRunning = true;
             var lastUpdate = System.Environment.TickCount;
             while (_isRunning)
@@ -56,6 +63,16 @@ namespace _2D_Engine_Sokov
             PhysicsSystem.Shutdown();
             RenderSystem.Shutdown();
 
+        }
+        public static void DisposeObject(GameObject gameObject)
+        {
+            if(instance._gameObjects.Contains(gameObject))
+            instance._gameObjects.(gameObject);
+        }
+        public static void DisposeUIElement(UIElement uIElement)
+        {
+            if(instance._UIElements.Contains(uIElement))
+            instance._UIElements.Remove(uIElement);
         }
         public static void SubmitObject(GameObject gameObject) {
             instance._gameObjects.AddLast(gameObject);
@@ -99,6 +116,31 @@ namespace _2D_Engine_Sokov
         public void Stop()
         {
             _isRunning = false;
+        }
+        public void LoadLevel(string path)
+        {
+            var newLevel = parser.LoadLevel(path);
+
+            // Очистка текущих объектов
+            _gameObjects.Clear();
+            _UIElements.Clear();
+
+            // Добавление новых объектов
+            foreach (var obj in newLevel.gameObjects)
+            {
+                SubmitObject(obj);
+            }
+
+            foreach (var ui in newLevel.uIElements)
+            {
+                SubmitUIElement(ui);
+            }
+
+            // Установка параметров уровня
+            PhysicsSystem.GRAVITY = newLevel.gravityForce;
+            RenderSystem.backgroundColor = newLevel.backColor;
+            RenderSystem.SubmitBackgrounds(newLevel.backgrounds.ToArray());
+            _currentLevel = newLevel;
         }
     }
 }

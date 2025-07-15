@@ -44,7 +44,23 @@ namespace _2D_Engine_Sokov
             };
 
             _logicThread.Start();
-            TestInititalise();
+            UIActionsInitialise();
+            //TestInititalise();
+        }
+        public static GameObject FindGameObjectByTag(string tag) {
+            if (_currentLogicList.Count > 0) {
+                foreach (GameObject go in _currentLogicList) { 
+                    if(go.Tag==tag) return go;
+                }
+            }
+            return null;
+        }
+        static void UIActionsInitialise() {
+            UIActions.RegisterAction("StopEnemies", () => {
+                Console.WriteLine("StopEnemies");
+                if(FindGameObjectByTag("Enemy")!=null)
+                FindGameObjectByTag("Enemy").IsActive = false;
+            });
         }
         static void TestInititalise() {
             Sprite testSprite;

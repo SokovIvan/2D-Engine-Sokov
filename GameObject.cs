@@ -10,10 +10,8 @@ namespace _2D_Engine_Sokov
         public bool GravityEnabled { get; set; } = false;
         public bool CollisionEnabled { get; set; } = false;
         public bool IsStatic { get; set; } = false;
-        //public Vector2 Velocity { get; set; } = Vector2.Zero; 
-        //public Vector2 Position { get; set; } = Vector2.Zero;
-        public Vector2 Scale { get; set; } = Vector2.One;
-        public Vector2 Size { get; set; } = Vector2.One;
+        public virtual Vector2 Scale { get; set; } = Vector2.One;
+        public virtual Vector2 Size { get; set; } = Vector2.One;
         public float Rotation { get; set; } = 0f;
         public float Mass { get; set; } = 1f;
         public Vector2 Origin { get; set; } = Vector2.Zero;
@@ -55,9 +53,15 @@ namespace _2D_Engine_Sokov
                 return Parent != null ? transform * Parent.WorldTransform : transform;
             }
         }
-
+        ~GameObject() { 
+            Game.DisposeObject(this);
+        }
         public bool IsOnGround { get; set; }
 
+        private bool started = false;
+        public virtual void Start() { 
+        
+        }
         public void AddChild(GameObject child)
         {
             child.Parent = this;
@@ -72,7 +76,12 @@ namespace _2D_Engine_Sokov
 
         public virtual void Update(double deltaTime)
         {
-            //Console.WriteLine(Tag);
+            if (!started)
+            {
+                Start();
+                started = true;
+                return;
+            }
         }
     }
 }

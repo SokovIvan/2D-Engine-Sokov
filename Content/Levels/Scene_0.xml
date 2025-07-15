@@ -1,0 +1,15 @@
+﻿<Level Name="First Level" BackgroundColor="100,149,237" Gravity="500">
+	<Background>
+		<Sprite Texture="Content/Textures/im1.png" Position="0,0" Scale="1,1" />
+	</Background>
+
+	<GameObject Name = "1" Tag = "Player" Type="Player" Position="100,100" Rotation ="0" Size = "100,100" Texture="Content/Textures/im1.png">
+		<Component Type="Collider" Mass = "10" Gravity = "false"/>
+	</GameObject>
+
+	<GameObject Name = "2" Tag = "Enemy" Type="Enemy" Position="200,200" Rotation ="45" Size = "100,100" Texture="Content/Textures/im2.png">
+		<Component Type="Collider" Mass = "10" Gravity = "false"/>
+	</GameObject>
+
+	<UIElement Type="Button" Position="10,10" OnClick="StopEnemies" Texture="Content/Textures/im2.png"/>
+</Level>

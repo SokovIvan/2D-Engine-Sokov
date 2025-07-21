@@ -12,12 +12,12 @@ namespace _2D_Engine_Sokov.UIElements
         double timer=0;
         public override void Update(double deltaTime)
         {
-            timer += deltaTime;
+            
             base.Update(deltaTime);
 
             // Рисование текста
-            // Рисуем текст
-
+            /* Рисуем текст
+            timer += deltaTime;
 
             if (timer < 1) return;
             if (IsMouseOver())
@@ -40,7 +40,7 @@ namespace _2D_Engine_Sokov.UIElements
                 RenderSystem.SubmitPersistentCommand(() => {
                     RenderSystem.DrawCircle(new Vector2(100, 100), 50f, Color.Green, 32, 2f);
                 }, framesToLive: 3);
-            }
+            }*/
         }
     }
 }

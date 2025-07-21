@@ -156,13 +156,17 @@ namespace _2D_Engine_Sokov
         {
            
             OnLogicUpdate?.Invoke();
-            foreach (var gameObject in _currentLogicList)
+            try
             {
-                if (gameObject.IsActive)
-                    gameObject.Update(deltaTime);
+                foreach (var gameObject in _currentLogicList)
+                {
+                    if (gameObject.IsActive)
+                        gameObject.Update(deltaTime);
+                }
             }
-
-            
+            catch (Exception e) { 
+            //pass
+            }
         }
         private static void SwapBuffers()
         {

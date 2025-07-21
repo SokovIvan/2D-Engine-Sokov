@@ -11,6 +11,7 @@ using System.Xml.Linq;
 using _2D_Engine_Sokov.GameObjects;
 using _2D_Engine_Sokov.UIElements;
 using System.ComponentModel;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace _2D_Engine_Sokov
 {
@@ -30,7 +31,8 @@ namespace _2D_Engine_Sokov
                 gravityForce = float.Parse(root.Attribute("Gravity")?.Value ?? "500"),
                 gameObjects = new List<GameObject>(),
                 uIElements = new List<UIElement>(),
-                backgrounds = new List<Sprite>()
+                backgrounds = new List<Sprite>(),
+                TileMap = ParseTileMap(root.Element("TileMap"))
             };
 
             // Парсинг игровых объектов
@@ -50,15 +52,47 @@ namespace _2D_Engine_Sokov
             // Парсинг фоновых спрайтов
             foreach (var bgElement in root.Elements("Background"))
             {
-                foreach (var spriteEl in bgElement.Elements("Sprite")) { 
+                foreach (var spriteEl in bgElement.Elements("Sprite"))
+                {
                     Sprite bg = ParseSprite(spriteEl);
                     if (bg != null) level.backgrounds.Add(bg);
                 }
-
             }
 
             current_level = level;
             return level;
+        }
+
+        private TileMap ParseTileMap(XElement tileMapElement)
+        {
+            if (tileMapElement == null) return null;
+
+            int width = int.Parse(tileMapElement.Attribute("Width")?.Value ?? "10");
+            int height = int.Parse(tileMapElement.Attribute("Height")?.Value ?? "10");
+            int tileWidth = int.Parse(tileMapElement.Attribute("TileWidth")?.Value ?? "32");
+            int tileHeight = int.Parse(tileMapElement.Attribute("TileHeight")?.Value ?? "32");
+
+            var tileMap = new TileMap(width, height, tileWidth, tileHeight);
+            var tileTextures = new Dictionary<string, Texture2D>();
+
+            foreach (var tileElement in tileMapElement.Elements("Tile"))
+            {
+                int x = int.Parse(tileElement.Attribute("X")?.Value ?? "0");
+                int y = int.Parse(tileElement.Attribute("Y")?.Value ?? "0");
+                bool isWalkable = bool.Parse(tileElement.Attribute("IsWalkable")?.Value ?? "true");
+                string textureName = tileElement.Attribute("Texture")?.Value;
+
+                if (!string.IsNullOrEmpty(textureName) && !tileTextures.ContainsKey(textureName))
+                {
+                    using var stream = System.IO.File.OpenRead(textureName);
+                    tileTextures[textureName] = Texture2D.FromStream(RenderSystem._graphicsDevice, stream);
+                }
+
+                tileMap.SetTile(x, y, new Tile(isWalkable, textureName));
+            }
+
+            tileMap.GenerateMapTexture(RenderSystem._graphicsDevice, tileTextures);
+            return tileMap;
         }
 
         private Color? ParseColor(string colorStr)
@@ -86,29 +120,27 @@ namespace _2D_Engine_Sokov
             string typeName = element.Attribute("Type")?.Value ?? "GameObject";
             string texturePath = element.Attribute("Texture")?.Value;
             string tag = element.Attribute("Tag")?.Value;
-            string name = element.Attribute("Name")?.Value;            
+            string name = element.Attribute("Name")?.Value;
             Vector2 size = ParseVector2(element.Attribute("Size")?.Value) ?? Vector2.One;
             Vector2 position = ParseVector2(element.Attribute("Position")?.Value) ?? Vector2.Zero;
             Vector2 scale = ParseVector2(element.Attribute("Scale")?.Value) ?? Vector2.One;
             bool isActive = bool.Parse(element.Attribute("IsActive")?.Value ?? "true");
-            float rotation = float.Parse(element.Attribute("Rotation")?.Value);
+            float rotation = float.Parse(element.Attribute("Rotation")?.Value ?? "0");
+
             GameObject gameObject;
 
-            // Создаем конкретный тип объекта на основе Type
             switch (typeName)
             {
-                case "Player":
-                    gameObject = new Player();
+                case "PlayerUnit":
+                    gameObject = new PlayerUnit();
                     break;
-                case "Enemy":
-                    gameObject = new Enemy();
+                case "EnemyUnit":
+                    gameObject = new EnemyUnit();
                     break;
-                // Добавьте другие типы по необходимости
                 default:
                     gameObject = new GameObject();
                     break;
             }
-
 
             gameObject.Tag = tag;
             gameObject.Name = name;
@@ -119,18 +151,18 @@ namespace _2D_Engine_Sokov
 
             if (gameObject is Sprite sprite && !string.IsNullOrEmpty(texturePath))
             {
-                RenderSystem.EnqueueTextureLoad(sprite,texturePath);
+                RenderSystem.EnqueueTextureLoad(sprite, texturePath);
             }
 
             foreach (var compElement in element.Elements("GameObject"))
             {
-                var child= ParseGameObject(compElement);
+                var child = ParseGameObject(compElement);
                 gameObject.AddChild(child);
             }
 
             foreach (var compElement in element.Elements("Component"))
             {
-                ParseComponent(gameObject,compElement);
+                ParseComponent(gameObject, compElement);
             }
 
             return gameObject;
@@ -163,15 +195,17 @@ namespace _2D_Engine_Sokov
                     };
                     RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
                     break;
-                /*case "Label":
-                    uiElement = new Label(text)
+                case "PlayerController":
+                    uiElement = new PlayerController()
                     {
                         Position = position,
+                        Size = size,
                         Color = color,
-                        IsActive = isActive
+                        IsActive = isActive,
+                        text = ""
                     };
-                    break;*/
-                // Добавьте другие типы UI элементов по необходимости
+                    RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
+                    break;
                 default:
                     uiElement = new UIElement()
                     {
@@ -208,12 +242,10 @@ namespace _2D_Engine_Sokov
                 IsActive = isActive,
                 LayerDepth = 1f
             };
-            RenderSystem.EnqueueTextureLoad(sprite,texturePath);
+            RenderSystem.EnqueueTextureLoad(sprite, texturePath);
 
             return sprite;
         }
-
-        // Вспомогательные методы для парсинга
 
         private Vector2? ParseVector2(string vectorStr)
         {
@@ -232,7 +264,7 @@ namespace _2D_Engine_Sokov
             }
         }
 
-        private void ParseComponent(GameObject gameObject,XElement element)
+        private void ParseComponent(GameObject gameObject, XElement element)
         {
             if (element == null) return;
 
@@ -240,17 +272,15 @@ namespace _2D_Engine_Sokov
             switch (typeName)
             {
                 case "Collider":
-                    float mass = float.Parse(element.Attribute("Mass")?.Value);
-                    bool gravity = Boolean.Parse(element.Attribute("Gravity")?.Value);
+                    float mass = float.Parse(element.Attribute("Mass")?.Value ?? "1");
+                    bool gravity = bool.Parse(element.Attribute("Gravity")?.Value ?? "false");
                     gameObject.CollisionEnabled = true;
                     gameObject.Mass = mass;
                     gameObject.GravityEnabled = gravity;
                     break;
-
                 default:
                     break;
             }
         }
-
     }
 }

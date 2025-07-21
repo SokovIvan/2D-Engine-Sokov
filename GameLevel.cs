@@ -15,7 +15,7 @@ namespace _2D_Engine_Sokov
         public Color backColor = Color.CornflowerBlue;
         public float gravityForce= 500f;
         public string Name="Unnamed";
-
+        public TileMap TileMap { get; set; }
         public GameLevel() { 
         }
     }

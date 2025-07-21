@@ -12,7 +12,7 @@ namespace _2D_Engine_Sokov
     public class RenderSystem
     {
         private static Microsoft.Xna.Framework.Game _game;
-        private static GraphicsDevice _graphicsDevice;
+        public static GraphicsDevice _graphicsDevice;
         private static SpriteBatch _spriteBatch;
         private static bool _isRunning;
 
@@ -367,7 +367,7 @@ namespace _2D_Engine_Sokov
                         layerDepth: sprite.LayerDepth
                     );
                 }
-
+                
                 while (_drawCommands.TryDequeue(out var command))
                 {
                     command.Invoke();

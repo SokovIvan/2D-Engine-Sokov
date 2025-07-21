@@ -24,6 +24,7 @@ namespace _2D_Engine_Sokov
         public Camera(Viewport viewport)
         {
             Viewport = viewport;
+            Position += new Vector2(Viewport.Width/2, Viewport.Height/2);
         }
 
         public void Move(Vector2 amount)

@@ -14,7 +14,7 @@ namespace _2D_Engine_Sokov
 {
     internal class Game
     {
-        private GameLevel _currentLevel;
+        public GameLevel _currentLevel;
 
         XMLParser parser;
         private Thread _renderThread;
@@ -41,8 +41,10 @@ namespace _2D_Engine_Sokov
             LogicSystem.Initialize();
             UISystem.Initialize();
             RenderSystem.EnableFrustumCulling(true);
+            EnemyAI.Initialize();
             // Загрузка начального уровня
-            LoadLevel("Content/Levels/Scene_0.xml");
+            while (RenderSystem._graphicsDevice==null) { }
+            LoadLevel("Content/Levels/Level1.xml");
 
             _isRunning = true;
             var lastUpdate = System.Environment.TickCount;
@@ -99,6 +101,7 @@ namespace _2D_Engine_Sokov
         }
         private void Render()
         {
+            RenderSystem.SubmitSprite(instance._currentLevel.TileMap.MapSprite);
             RenderSystem.SubmitSprites(_gameObjects.OfType<Sprite>().Where(s => s.IsActive).ToArray());
         }
         private void PhysicsUpdate()

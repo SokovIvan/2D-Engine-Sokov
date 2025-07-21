@@ -27,6 +27,7 @@ namespace _2D_Engine_Sokov
 
         // Очередь команд отрисовки
         private static readonly ConcurrentQueue<Action> _drawCommands = new ConcurrentQueue<Action>();
+        private static readonly ConcurrentQueue<Action> _drawCommandsOffCamera = new ConcurrentQueue<Action>();
 
         // Очередь загрузки текстур
         private static readonly ConcurrentQueue<(Sprite, string)> _textureLoadQueue = new();
@@ -50,20 +51,31 @@ namespace _2D_Engine_Sokov
             public Action Command { get; set; }
             public int FramesLeft { get; set; }
         }
-
+        private static readonly List<PersistentDrawCommand> _persistentCommandsOffCamera = new();
         private static readonly List<PersistentDrawCommand> _persistentCommands = new();
         private static readonly object _persistentCommandsLock = new();
 
         // Новый метод для добавления "долгоживущих" команд
-        public static void SubmitPersistentCommand(Action command, int framesToLive)
+        public static void SubmitPersistentCommand(Action command, int framesToLive,bool useCamera = true)
         {
-            lock (_persistentCommandsLock)
-            {
-                _persistentCommands.Add(new PersistentDrawCommand
+            if (useCamera)
+                lock (_persistentCommandsLock)
                 {
-                    Command = command,
-                    FramesLeft = framesToLive
-                });
+                    _persistentCommands.Add(new PersistentDrawCommand
+                    {
+                        Command = command,
+                        FramesLeft = framesToLive
+                    });
+                }
+            else {
+                lock (_persistentCommandsLock)
+                {
+                    _persistentCommandsOffCamera.Add(new PersistentDrawCommand
+                    {
+                        Command = command,
+                        FramesLeft = framesToLive
+                    });
+                }
             }
         }
         public static void SubmitBackgrounds(Sprite[] backgrounds)
@@ -214,22 +226,21 @@ namespace _2D_Engine_Sokov
                 }
             });
         }
-        public static void DrawText(string text, Vector2 position, Color color, float scale = 1f, bool useCamera = false)
-        {
-            _drawCommands.Enqueue(() => {
-                var transform = useCamera ? _camera?.TransformMatrix : null;
-                _spriteBatch.DrawString(_defaultFont, text, position, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-
-            });
-        }
 
         public static void DrawText(SpriteFont font, string text, Vector2 position, Color color, float scale = 1f, bool useCamera = false)
         {
+            if(useCamera)
             _drawCommands.Enqueue(() => {
                 var transform = useCamera ? _camera?.TransformMatrix : null;
-                _spriteBatch.DrawString(font, text, position, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+                _spriteBatch.DrawString(font, text, position, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 1f);
 
             });
+            else
+                _drawCommandsOffCamera.Enqueue(() => {
+                    var transform = useCamera ? _camera?.TransformMatrix : null;
+                    _spriteBatch.DrawString(font, text, position, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 1f);
+
+                });
         }
         public static void EnableFrustumCulling(bool enable)
         {
@@ -242,6 +253,10 @@ namespace _2D_Engine_Sokov
         public static bool IsFrustumCullingEnabled()
         {
             return _camera?.FrustumCullingEnabled ?? false;
+        }
+        public static SpriteFont GetDefaultFont()
+        {
+            return _defaultFont;
         }
         private class RenderGame : Microsoft.Xna.Framework.Game
         {
@@ -371,13 +386,14 @@ namespace _2D_Engine_Sokov
                 }
                 _spriteBatch.End();
 
-                if (uiList.Count > 0)
-                {
                     _spriteBatch.Begin(
                         sortMode: SpriteSortMode.FrontToBack,
                         blendState: BlendState.AlphaBlend,
                         samplerState: SamplerState.PointClamp
                     );
+                if (uiList.Count > 0)
+                {
+
 
                     foreach (var element in uiList.OrderBy(e => e.LayerDepth))
                     {
@@ -395,11 +411,28 @@ namespace _2D_Engine_Sokov
                             layerDepth: element.LayerDepth
                         );
                     }
-                    _spriteBatch.End();
+ 
                 }
+                while (_drawCommandsOffCamera.TryDequeue(out var command))
+                {
+                    command.Invoke();
+                }
+                lock (_persistentCommandsLock)
+                {
+                    for (int i = _persistentCommandsOffCamera.Count - 1; i >= 0; i--)
+                    {
+                        var cmd = _persistentCommandsOffCamera[i];
+                        cmd.Command.Invoke();
+                        cmd.FramesLeft--;
 
+                        if (cmd.FramesLeft <= 0)
+                            _persistentCommandsOffCamera.RemoveAt(i);
+                    }
+                }
+                _spriteBatch.End();
                 base.Draw(gameTime);
             }
+
             public static void DrawDebugBounds(SpriteBatch spriteBatch)
             {
                 foreach (var element in _uiElements.Where(e => e.IsActive))
@@ -487,6 +520,12 @@ namespace _2D_Engine_Sokov
             {
                 _nextFrameList.Clear();
             }
+        }
+        public static void DrawStaticText(SpriteFont font, string text, Vector2 position, Color color, float scale = 1f)
+        {
+            _drawCommands.Enqueue(() => {
+                _spriteBatch.DrawString(font, text, position, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+            });
         }
 
     }

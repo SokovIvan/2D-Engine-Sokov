@@ -67,7 +67,7 @@ namespace _2D_Engine_Sokov
         public static void DisposeObject(GameObject gameObject)
         {
             if(instance._gameObjects.Contains(gameObject))
-            instance._gameObjects.(gameObject);
+            instance._gameObjects.Remove(gameObject);
         }
         public static void DisposeUIElement(UIElement uIElement)
         {

@@ -11,5 +11,5 @@
 		<Component Type="Collider" Mass = "10" Gravity = "false"/>
 	</GameObject>
 
-	<UIElement Type="Button" Position="10,10" OnClick="StopEnemies" Texture="Content/Textures/im2.png"/>
+	<UIElement Type="Button" Position="10,10" Size ="200,100" Text ="StopEnemies" OnClick="StopEnemies" Texture="Content/Textures/im2.png"/>
 </Level>

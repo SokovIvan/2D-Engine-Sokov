@@ -141,7 +141,7 @@ namespace _2D_Engine_Sokov
             if (element == null) return null;
 
             string typeName = element.Attribute("Type")?.Value ?? "UIElement";
-            string text = element.Attribute("Text")?.Value;
+            string text = element.Attribute("Text")?.Value ?? " ";
             Vector2 position = ParseVector2(element.Attribute("Position")?.Value) ?? Vector2.Zero;
             Vector2 size = ParseVector2(element.Attribute("Size")?.Value) ?? new Vector2(100, 50);
             Color color = ParseColor(element.Attribute("Color")?.Value) ?? Color.White;
@@ -158,7 +158,8 @@ namespace _2D_Engine_Sokov
                         Position = position,
                         Size = size,
                         Color = color,
-                        IsActive = isActive
+                        IsActive = isActive,
+                        text = text
                     };
                     RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
                     break;

@@ -8,7 +8,7 @@ namespace _2D_Engine_Sokov
     {
         private Texture2D _texture;
         private Vector2 _size;
-        private Vector2? _pendingSize = null; // Для отложенного размера
+        private Vector2? _pendingSize = null; 
         private Vector2 _scale = Vector2.One;
         private string _texturePath;
         public string Name { get; set; } = "Unnamed";
@@ -22,7 +22,32 @@ namespace _2D_Engine_Sokov
         public Rectangle? SourceRectangle { get; set; } = null;
         public SpriteEffects Effects { get; set; } = SpriteEffects.None;
         public Action OnClick { get; set; }
+        public string text { get; set; } = string.Empty;
+        public Color textColor { get; set; } = Color.Red;
+        public float fontSize { get; set; } = 1f;
+        public string Text
+        {
+            get => text;
+            set => text = value;
+        }
 
+        public Color TextColor
+        {
+            get => textColor;
+            set => textColor = value;
+        }
+
+        public float FontSize
+        {
+            get => fontSize;
+            set => fontSize = MathHelper.Clamp(value, 0.1f, 10f);
+        }
+        private Vector2? _cachedTextPosition;
+        private string _cachedText;
+        private float _cachedFontSize;
+        public SpriteFont Font { get; set; } 
+        public Vector2 TextOffset { get; set; } = Vector2.Zero; 
+        public bool AutoCenterText { get; set; } = true; 
         public Texture2D Texture
         {
             get => _texture;
@@ -104,13 +129,46 @@ namespace _2D_Engine_Sokov
             }
         }
 
-        public virtual void Update(double deltaTime) { }
+        public virtual void Update(double deltaTime)
+        {
+            if (!string.IsNullOrEmpty(Text))
+            {            
+                if (_cachedText != Text || _cachedFontSize != FontSize || _cachedTextPosition == null)
+                {
+                    var bounds = this.Bounds;
+                    var font = this.Font ?? RenderSystem.GetDefaultFont();
+                    if (font == null) return;
+
+                    Vector2 textSize = font.MeasureString(Text) * FontSize;
+
+                    _cachedTextPosition = AutoCenterText
+                        ? new Vector2(
+                            bounds.X + textSize.X/ 4 ,
+                            bounds.Y + (bounds.Height - textSize.Y) / 2)
+                        : new Vector2(bounds.X, bounds.Y);
+
+                    _cachedTextPosition += TextOffset;
+                    _cachedText = Text;
+                    _cachedFontSize = FontSize;
+                }
+
+                RenderSystem.SubmitPersistentCommand(() => {
+                    RenderSystem.DrawText(
+                        Font ?? RenderSystem.GetDefaultFont(),
+                        Text,
+                        _cachedTextPosition.Value,
+                        TextColor,
+                        FontSize,
+                        false
+                    );
+                }, framesToLive: 2, useCamera: false);
+            }
+        }
 
         public void LoadTexture(string path)
         {
-            if (_texturePath == path) return; // Уже загружаем эту текстуру
+            if (_texturePath == path) return; 
 
-            // Освобождаем предыдущую текстуру
             if (!string.IsNullOrEmpty(_texturePath))
             {
                 TextureManager.ReleaseTexture(_texturePath);
@@ -171,7 +229,6 @@ namespace _2D_Engine_Sokov
         }
         public bool IsVisible()
         {
-            // UI элементы обычно всегда видны, если активны
             return IsActive;
         }
         private void UpdateSizeFromScale()

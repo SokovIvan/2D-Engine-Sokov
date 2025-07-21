@@ -18,9 +18,7 @@ namespace _2D_Engine_Sokov.UIElements
             // Рисование текста
             // Рисуем текст
 
-            RenderSystem.SubmitPersistentCommand(() => {
-                RenderSystem.DrawText("Hello, world!", Vector2.Zero, Color.Red, 1f, false);
-            }, framesToLive: 3);
+
             if (timer < 1) return;
             if (IsMouseOver())
             {

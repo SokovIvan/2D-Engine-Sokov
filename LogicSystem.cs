@@ -55,6 +55,12 @@ namespace _2D_Engine_Sokov
             }
             return null;
         }
+        public static GameObject[] FindGameObjectsByTag(string tag)
+        {
+            if (_currentLogicList.Count > 0)
+            return _currentLogicList.Where(s => s.IsActive && s.Tag == tag).ToArray();
+            return Array.Empty<GameObject>();
+        }
         static void UIActionsInitialise() {
             UIActions.RegisterAction("StopEnemies", () => {
                 Console.WriteLine("StopEnemies");
@@ -62,6 +68,24 @@ namespace _2D_Engine_Sokov
                 FindGameObjectByTag("Enemy").IsActive = false;
             });
         }
+        public static GameObject[] FindGameObjectsByName(string name)
+        {
+            if (_currentLogicList.Count > 0)
+                return _currentLogicList.Where(s => s.IsActive && s.Name == name).ToArray();
+            return Array.Empty<GameObject>();
+        }
+        public static GameObject FindGameObjectByName(string name)
+        {
+            if (_currentLogicList.Count > 0)
+            {
+                foreach (GameObject go in _currentLogicList)
+                {
+                    if (go.Name == name) return go;
+                }
+            }
+            return null;
+        }
+
         static void TestInititalise() {
             Sprite testSprite;
             testSprite = new Player

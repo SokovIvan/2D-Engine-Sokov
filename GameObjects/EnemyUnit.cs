@@ -16,5 +16,9 @@ namespace _2D_Engine_Sokov.GameObjects
             Mass = 100f;
             GravityEnabled = false;
         }
+        public override void Update(double deltaTime)
+        {
+            base.Update(deltaTime);
+        }
     }
 }

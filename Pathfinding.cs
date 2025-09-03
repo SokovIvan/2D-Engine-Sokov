@@ -19,10 +19,17 @@ namespace _2D_Engine_Sokov
         {
             var startPoint = tileMap.WorldToGridPosition(start);
             var endPoint = tileMap.WorldToGridPosition(end);
-
-            var openList = new List<Node> { new Node { Position = startPoint, GCost = 0, HCost = Heuristic(startPoint, endPoint) } };
+            // Инициализация начального узла
+            var startNode = new Node
+            {
+                Position = startPoint,
+                GCost = 0,
+                HCost = Heuristic(startPoint, endPoint),
+            };
+            var openList = new List<Node> { startNode };
             var closedList = new HashSet<Point>();
             var cameFrom = new Dictionary<Point, Node>();
+            Node closestNode = startNode;
 
             while (openList.Count > 0)
             {
@@ -36,6 +43,9 @@ namespace _2D_Engine_Sokov
                         currentIndex = i;
                     }
                 }
+                // Обновляем ближайший узел
+                if (current.HCost < closestNode.HCost)
+                    closestNode = current;
 
                 openList.RemoveAt(currentIndex);
                 closedList.Add(current.Position);
@@ -48,7 +58,7 @@ namespace _2D_Engine_Sokov
                 foreach (var neighbor in GetNeighbors(tileMap, current.Position))
                 {
                     if (closedList.Contains(neighbor)) continue;
-                    if (!tileMap.IsWalkable(neighbor.X, neighbor.Y)) continue;
+                    if (!tileMap.IsWalkable(neighbor.X, neighbor.Y)|| tileMap.IsOccupied(neighbor.X, neighbor.Y)) continue;
 
                     float tentativeGCost = current.GCost + Vector2.Distance(tileMap.GridToWorldPosition(current.Position.X, current.Position.Y), tileMap.GridToWorldPosition(neighbor.X, neighbor.Y));
 
@@ -59,6 +69,9 @@ namespace _2D_Engine_Sokov
                         HCost = Heuristic(neighbor, endPoint),
                         Parent = current
                     };
+   
+                    if (neighborNode.HCost < closestNode.HCost)
+                        closestNode = neighborNode;
 
                     var existingNode = openList.Find(n => n.Position == neighbor);
                     if (existingNode == null)
@@ -75,7 +88,7 @@ namespace _2D_Engine_Sokov
                 }
             }
 
-            return new List<Vector2>();
+            return ReconstructPath(tileMap, cameFrom, closestNode);
         }
 
         private static float Heuristic(Point a, Point b)
@@ -101,7 +114,7 @@ namespace _2D_Engine_Sokov
             var path = new List<Vector2>();
             while (current != null)
             {
-                path.Add(tileMap.GridToWorldPosition(current.Position.X, current.Position.Y));
+                path.Add(tileMap.GridToWorldPosition(current.Position.X, current.Position.Y)+new Vector2(tileMap.TileWidth/2,tileMap.TileHeight/2));
                 cameFrom.TryGetValue(current.Position, out var parent);
                 current = parent;
             }

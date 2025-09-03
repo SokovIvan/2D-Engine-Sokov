@@ -61,6 +61,12 @@ namespace _2D_Engine_Sokov
             return _currentLogicList.Where(s => s.IsActive && s.Tag == tag).ToArray();
             return Array.Empty<GameObject>();
         }
+        public static GameObject[] FindGameObjectsByType(Type type)
+        {
+            if (_currentLogicList.Count > 0)
+                return _currentLogicList.Where(s => s.IsActive && (s.GetType() == type || s.GetType().IsSubclassOf(type))).ToArray();
+            return Array.Empty<GameObject>();
+        }
         static void UIActionsInitialise() {
             UIActions.RegisterAction("StopEnemies", () => {
                 Console.WriteLine("StopEnemies");

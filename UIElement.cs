@@ -128,9 +128,17 @@ namespace _2D_Engine_Sokov
                 TextureManager.ReleaseTexture(_texturePath);
             }
         }
-
+        private bool started = false;
+        public virtual void Start()
+        {
+            started = true;
+        }
         public virtual void Update(double deltaTime)
         {
+            if (!started) { 
+                Start();
+                return;
+            }
             if (!string.IsNullOrEmpty(Text))
             {            
                 if (_cachedText != Text || _cachedFontSize != FontSize || _cachedTextPosition == null)

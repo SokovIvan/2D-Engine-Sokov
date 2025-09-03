@@ -125,20 +125,10 @@
 	<GameObject Type="PlayerUnit" Name="Player1" Tag="Player" Position="32,32" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
 		<Component Type="Collider" Mass="100" Gravity="false" />
 	</GameObject>
-	<GameObject Type="PlayerUnit" Name="Player2" Tag="Player" Position="256,32" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
+	<GameObject Type="PlayerUnit" Name="Player2" Tag="Player" Position="64,64" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
 		<Component Type="Collider" Mass="100" Gravity="false" />
 	</GameObject>
-	<GameObject Type="PlayerUnit" Name="Player2" Tag="Player" Position="512,32" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
-		<Component Type="Collider" Mass="100" Gravity="false" />
-	</GameObject>
-	<GameObject Type="EnemyUnit" Name="Enemy1" Tag="Enemy" Position="256,512" Size="32,32" Texture="Content/Textures/enemy.png" IsActive="true">
-		<Component Type="Collider" Mass="100" Gravity="false" />
-	</GameObject>
-	<GameObject Type="EnemyUnit" Name="Enemy1" Tag="Enemy" Position="322,512" Size="32,32" Texture="Content/Textures/enemy.png" IsActive="true">
-		<Component Type="Collider" Mass="100" Gravity="false" />
-	</GameObject>
-	<UIElement Type="Button" Position="100,100" Size="100,50" Color="255,255,255" Texture="Content/Textures/im1.png" IsActive="false" OnClick="StopEnemies" />
+	<UIElement Type="Button" Position="100,100" Size="100,50" Color="255,255,255" Texture="Content/Textures/im1.png" IsActive="true" OnClick="StopEnemies" />
 	<UIElement Type="PlayerController" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
-	<UIElement Type="AIController" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
 
 </Level>

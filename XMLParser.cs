@@ -206,6 +206,17 @@ namespace _2D_Engine_Sokov
                     };
                     RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
                     break;
+                case "AIController":
+                    uiElement = new AIController()
+                    {
+                        Position = position,
+                        Size = size,
+                        Color = color,
+                        IsActive = isActive,
+                        text = ""
+                    };
+                    RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
+                    break;
                 default:
                     uiElement = new UIElement()
                     {

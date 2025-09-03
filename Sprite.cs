@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Threading;
+using Assimp.Unmanaged;
 
 
 namespace _2D_Engine_Sokov
@@ -16,7 +17,14 @@ namespace _2D_Engine_Sokov
         private Texture2D _texture;
         private Vector2 _size;
         private Vector2? _pendingSize = null; // Желаемый размер, если текстура ещё не загружена
-
+        
+        public void SetOriginToCenter()
+        {
+            if (Texture != null)
+            {
+                Origin = new Vector2(Texture.Width / 2, Texture.Height / 2);
+            }
+        }
         public Texture2D Texture
         {
             get => _texture;
@@ -102,6 +110,7 @@ namespace _2D_Engine_Sokov
                 );
             }
         }
+
 
         public void LoadTexture(string path)
         {

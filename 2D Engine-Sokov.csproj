@@ -15,6 +15,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Content\Levels\Level2.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\Levels\Level1.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

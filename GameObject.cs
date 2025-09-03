@@ -22,7 +22,6 @@ namespace _2D_Engine_Sokov
         // В GameObject
         public Vector2 _lastCollisionNormal;
         public float _normalStickTime = 0f;
-        // ... существующие свойства ...
         private Vector2 _position;
         private readonly object _positionLock = new object();
 
@@ -81,6 +80,33 @@ namespace _2D_Engine_Sokov
                 Start();
                 started = true;
                 return;
+            }
+        }
+        public void Rotate(float degrees)
+        {
+            Rotation += MathHelper.ToRadians(degrees);
+        }
+
+        public void SetRotation(float degrees)
+        {
+            Rotation = MathHelper.ToRadians(degrees);
+        }
+
+        public void LookAt(Vector2 targetPosition)
+        {
+            Vector2 direction = targetPosition - Position;
+            if (direction != Vector2.Zero)
+            {
+                direction.Normalize();
+                Rotation = (float)Math.Atan2(direction.Y, direction.X);
+            }
+        }
+
+        public void LookAt(GameObject target)
+        {
+            if (target != null)
+            {
+                LookAt(target.Position);
             }
         }
     }

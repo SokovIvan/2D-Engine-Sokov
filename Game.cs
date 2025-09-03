@@ -33,7 +33,9 @@ namespace _2D_Engine_Sokov
             _frameTimeMs = 1000 / _targetFps;
             parser = new XMLParser();
         }
-
+        public List<GameObject> get_gameObjects() { 
+            return _gameObjects.ToList();
+        }
         public void Run()
         {
             RenderSystem.Initialize(800, 600);

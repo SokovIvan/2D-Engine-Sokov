@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
+using _2D_Engine_Sokov.GameObjects;
 
 namespace _2D_Engine_Sokov
 {
@@ -13,7 +14,9 @@ namespace _2D_Engine_Sokov
         private Tile[,] Tiles;
         private Texture2D MapTexture;
         public Sprite MapSprite;
-
+        public Tile[,] GetTiles() { 
+            return Tiles; 
+        }
         public TileMap(int width, int height, int tileWidth, int tileHeight)
         {
             Width = width;
@@ -28,9 +31,17 @@ namespace _2D_Engine_Sokov
             if (x >= 0 && x < Width && y >= 0 && y < Height)
             {
                 Tiles[x, y] = tile;
+                Tiles[x, y].id = (x+1)*Width*100 + (y+1);
             }
         }
-
+        public Point GetTilePoint(Tile tile)
+        {
+            for (int x=0; x<Width; x++)
+                for (int y = 0; y < Height; y++)
+                    if(Tiles[x, y] == tile)
+                        return new Point(x, y);
+                    return Point.Zero;
+        }
         public Tile GetTile(int x, int y)
         {
             if (x >= 0 && x < Width && y >= 0 && y < Height)
@@ -39,13 +50,16 @@ namespace _2D_Engine_Sokov
             }
             return null;
         }
-
         public bool IsWalkable(int x, int y)
         {
             var tile = GetTile(x, y);
             return tile != null && tile.IsWalkable;
         }
-
+        public bool IsOccupied(int x, int y)
+        {
+            var tile = GetTile(x, y);
+            return tile != null && tile.IsOccupied;
+        }
         public void GenerateMapTexture(GraphicsDevice graphicsDevice, Dictionary<string, Texture2D> tileTextures)
         {
             MapTexture = new Texture2D(graphicsDevice, Width * TileWidth, Height * TileHeight);
@@ -90,6 +104,24 @@ namespace _2D_Engine_Sokov
             return new Vector2(x * TileWidth, y * TileHeight);
         }
 
+        public bool OccupyTile(Vector2 worldPos)
+        {
+            Point grid = WorldToGridPosition(worldPos);
+            Tile tile = GetTile(grid.X, grid.Y);
+            if (tile.IsWalkable && !tile.IsOccupied)
+            {
+                tile.IsOccupied = true;
+                return true;
+            }
+            return false;
+        }
+        public bool DeoccupyTile(Vector2 worldPos)
+        {
+            Point grid = WorldToGridPosition(worldPos);
+            Tile tile = GetTile(grid.X, grid.Y);
+            tile.IsOccupied = false;
+            return true;
+        }
         public Point WorldToGridPosition(Vector2 worldPos)
         {
             return new Point((int)(worldPos.X / TileWidth), (int)(worldPos.Y / TileHeight));
@@ -98,13 +130,23 @@ namespace _2D_Engine_Sokov
 
     public class Tile
     {
+        public int id { get; set; }
         public bool IsWalkable { get; set; }
+        public bool IsOccupied { get; set; }
         public string TextureName { get; set; }
-
         public Tile(bool isWalkable, string textureName)
         {
             IsWalkable = isWalkable;
+            IsOccupied = false;
             TextureName = textureName;
+        }
+        public override bool Equals(object obj) { 
+            if (!(obj is Tile)) return false;
+            if (obj is Tile) { 
+                if(id== ((Tile)obj).id)
+                    return true;
+            }
+            return false;
         }
     }
 }

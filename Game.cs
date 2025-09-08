@@ -9,6 +9,7 @@ using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using TwoMGFX.TPGParser;
 
 namespace _2D_Engine_Sokov
 {
@@ -19,14 +20,14 @@ namespace _2D_Engine_Sokov
         XMLParser parser;
         private Thread _renderThread;
         public bool _isRunning;
-        private readonly LinkedList<GameObject> _gameObjects = new();
-        private readonly LinkedList<UIElement> _UIElements = new();
+        private LinkedList<GameObject> _gameObjects = new();
+        private LinkedList<UIElement> _UIElements = new();
         private readonly int _targetFps = 60;
         private readonly int _frameTimeMs;
 
         public static Game instance;
         public static KeyboardState keyboardState;
-
+        public bool loading = false;
         public Game()
         {
             instance = this;
@@ -38,13 +39,14 @@ namespace _2D_Engine_Sokov
         }
         public void Run()
         {
+
             RenderSystem.Initialize(800, 600);
             PhysicsSystem.Initialize();
             LogicSystem.Initialize();
             UISystem.Initialize();
             RenderSystem.EnableFrustumCulling(true);
             EnemyAI.Initialize();
-            // Загрузка начального уровня
+ 
             while (RenderSystem._graphicsDevice==null) { }
             LoadLevel("Content/Levels/Level1.xml");
 
@@ -57,6 +59,7 @@ namespace _2D_Engine_Sokov
 
                 if (deltaTime >= _frameTimeMs)
                 {
+                    if(!loading)
                     Update();
                     lastUpdate = currentTime;
                 }
@@ -88,11 +91,14 @@ namespace _2D_Engine_Sokov
         private void Update()
         {  
             HandleInput();
+            // Синхронизация перед обновлением
+            if (loading) return;
             LogicUpdate();
             PhysicsUpdate();
             UIUpdate();  
             Render();
         }
+
         private void HandleInput()
         {
             keyboardState = Keyboard.GetState();
@@ -124,19 +130,37 @@ namespace _2D_Engine_Sokov
         }
         public void LoadLevel(string path)
         {
-            var newLevel = parser.LoadLevel(path);
+            loading = true;
 
-            // Очистка текущих объектов
+            // Полная очистка всех систем
+            LogicSystem.ClearAllBuffers();
+            PhysicsSystem.ClearAllBuffers();
+            RenderSystem.ClearAllBuffers();
+            UISystem.ClearAllUIElements();
+
+            // Очистка внутренних списков
             _gameObjects.Clear();
             _UIElements.Clear();
 
-            // Добавление новых объектов
-            foreach (var obj in newLevel.gameObjects)
+            if (_currentLevel != null)
+            {
+                _currentLevel.uIElements.Clear();
+                _currentLevel.gameObjects.Clear();
+                _currentLevel.backgrounds.Clear();
+                _currentLevel.TileMap = null;
+            }
+
+            // Загрузка нового уровня
+            var newLevel = parser.LoadLevel(path);
+            _currentLevel = newLevel;
+
+            // Добавление новых объектов с проверкой на null
+            foreach (var obj in newLevel.gameObjects.Where(obj => obj != null))
             {
                 SubmitObject(obj);
             }
 
-            foreach (var ui in newLevel.uIElements)
+            foreach (var ui in newLevel.uIElements.Where(ui => ui != null))
             {
                 SubmitUIElement(ui);
             }
@@ -144,8 +168,13 @@ namespace _2D_Engine_Sokov
             // Установка параметров уровня
             PhysicsSystem.GRAVITY = newLevel.gravityForce;
             RenderSystem.backgroundColor = newLevel.backColor;
-            RenderSystem.SubmitBackgrounds(newLevel.backgrounds.ToArray());
-            _currentLevel = newLevel;
+            RenderSystem.SubmitBackgrounds(newLevel.backgrounds.Where(b => b != null).ToArray());
+
+            // Принудительная сборка мусора
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            loading = false;
         }
     }
 }

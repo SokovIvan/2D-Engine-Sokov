@@ -10,10 +10,12 @@ using Microsoft.Xna.Framework.Input;
 namespace _2D_Engine_Sokov.UIElements
 {
     public class PlayerController:UIElement
-    {        
+    {
+        public static Building placeBuilding = null;
+        public static bool placingBuilding=false;
         private Vector2 firstSelection = Vector2.Zero;
         private Vector2 lastSelection = Vector2.Zero;
-        private List<Unit> selectedUnits = new();
+        public List<Unit> selectedUnits = new();
 
         public override void Update(double deltaTime)
         {
@@ -49,6 +51,7 @@ namespace _2D_Engine_Sokov.UIElements
         private void HandleSelection() {
             var keyboard = Keyboard.GetState();
             var mouse = Mouse.GetState();
+
             if (mouse.RightButton == ButtonState.Pressed)
             {
                 var mousePos = new Vector2(mouse.X, mouse.Y);
@@ -62,6 +65,24 @@ namespace _2D_Engine_Sokov.UIElements
                 //    unit.Path = Pathfinding.FindPath(Game.instance._currentLevel.TileMap, unit.Position, worldPos+(posUnits[i]- posUnits[0]));
                 //}
                 //Console.WriteLine(worldPos);
+                if (placingBuilding) {
+                    var build = Activator.CreateInstance(placeBuilding.GetType());
+                    var building = ((Building)build);
+                    building.Position = worldPos;
+                    building.Size = placeBuilding.Size;
+                    building.Texture = placeBuilding.Texture;
+                    building.CollisionEnabled = placeBuilding.CollisionEnabled;
+                    building.GravityEnabled = placeBuilding.GravityEnabled;
+                    building.Mass = placeBuilding.Mass;
+                    building.ProduceUnit = placeBuilding.ProduceUnit;
+                    building.ProducingTime = placeBuilding.ProducingTime;
+                    building.ProduceOffset = placeBuilding.ProduceOffset;
+                    if (building != null)
+                    {                        
+                        Game.SubmitObject(building);
+                    }
+                    placingBuilding = false;
+                }
                 foreach (Unit unit in selectedUnits)
                     unit.Path = Pathfinding.FindPath(Game.instance._currentLevel.TileMap, unit.Position, worldPos + (unit.Position - selectedUnits.First().Position));
             

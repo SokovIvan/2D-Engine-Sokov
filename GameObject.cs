@@ -52,8 +52,12 @@ namespace _2D_Engine_Sokov
                 return Parent != null ? transform * Parent.WorldTransform : transform;
             }
         }
-        ~GameObject() { 
+        ~GameObject()
+        {
+            try { 
             Game.DisposeObject(this);
+            }
+            catch { Console.WriteLine("Ошибка"); }
         }
         public bool IsOnGround { get; set; }
 

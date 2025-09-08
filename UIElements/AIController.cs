@@ -11,7 +11,7 @@ using Microsoft.Xna.Framework.Content.Pipeline.Graphics;
 namespace _2D_Engine_Sokov.UIElements
 {
 
-    internal class AIController : UIElement
+    public class AIController : UIElement
     {
         private double timer = 0f;
         public static string AITeam = "Enemy";
@@ -25,6 +25,7 @@ namespace _2D_Engine_Sokov.UIElements
             base.Update(deltaTime);
             timer += deltaTime;
             if (timer > 0.5f) {
+               // Console.WriteLine(Name);
                 timer = 0;
                 EnemyMap.calculateDangerMap();
                 foreach (Unit unit in LogicSystem.FindGameObjectsByType(typeof(Unit)))
@@ -36,20 +37,28 @@ namespace _2D_Engine_Sokov.UIElements
                        // Console.WriteLine(tP.ToString());
                         var destP = Game.instance._currentLevel.TileMap.GridToWorldPosition(tP.X, tP.Y);
                         //Console.WriteLine(destP.ToString());
-                        unit.Path = Pathfinding.FindPath(Game.instance._currentLevel.TileMap, unit.Position, destP);
+                        var path = Pathfinding.FindPath(Game.instance._currentLevel.TileMap, unit.Position, destP);
+                        if (path.Count>1) 
+                            path.RemoveAt(0);
+                        unit.Path = path;
 
                     }
                 }
                  
             }
         }
-        private class EnemyMap
+        public class EnemyMap
         {
             public static Dictionary<Tile, int> dangerousTiles = new();
             public static int dangerScale = 1;
             public static Tile mostDangerTile;
             public static string AITeam = "Enemy";
-            public static void calculateDangerMap() {
+            public static void clearMap()
+            {
+                dangerousTiles.Clear();
+                mostDangerTile = null;
+            }
+                public static void calculateDangerMap() {
                 dangerousTiles.Clear();
                 var map = Game.instance._currentLevel.TileMap;
                 mostDangerTile = map.GetTile(map.Width/2,map.Height/2);

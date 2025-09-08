@@ -62,7 +62,14 @@ namespace _2D_Engine_Sokov
         }
         public void GenerateMapTexture(GraphicsDevice graphicsDevice, Dictionary<string, Texture2D> tileTextures)
         {
-            MapTexture = new Texture2D(graphicsDevice, Width * TileWidth, Height * TileHeight);
+            // Освобождаем предыдущую текстуру
+            if (MapTexture != null && !MapTexture.IsDisposed)
+            {
+                MapTexture.Dispose();
+            }
+
+            // Создаем новую текстуру
+             MapTexture = new Texture2D(graphicsDevice, Width * TileWidth, Height * TileHeight);
             Color[] data = new Color[Width * TileWidth * Height * TileHeight];
 
             for (int y = 0; y < Height; y++)

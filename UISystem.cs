@@ -40,6 +40,10 @@ namespace _2D_Engine_Sokov
 
             _UIThread.Start();
         }
+        public static void ClearAllUIElements()
+        {
+            _uiElements.Clear();
+        }
         private static void UIThreadLoop()
         {
             double lastUpdateTime = 0;
@@ -72,9 +76,12 @@ namespace _2D_Engine_Sokov
             {
                 CheckClickEvents();
             }
+            try { 
             foreach (UIElement element in _uiElements) {
                 element.Update(deltaTime);
             }
+            }
+            catch { }
         }
 
         public static void RegisterUIElement(UIElement element)

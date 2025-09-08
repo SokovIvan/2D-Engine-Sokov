@@ -29,7 +29,24 @@ namespace _2D_Engine_Sokov
         private static double _updateInterval = 1000.0 / _targetUpdateRate;
 
         public static event Action OnLogicUpdate;
-
+        public static void ClearBuffer()
+        {
+            lock (_bufferLock)
+            {
+                _nextLogicList.Clear();
+                _currentLogicList.Clear();
+            }
+        }
+        public static void ClearAllBuffers()
+        {
+            lock (_bufferLock)
+            {
+                _frameBufferA.Clear();
+                _frameBufferB.Clear();
+                _currentLogicList.Clear();
+                _nextLogicList.Clear();
+            }
+        }
         public static void Initialize()
         {
             if (_isRunning) return;
@@ -72,6 +89,9 @@ namespace _2D_Engine_Sokov
                 Console.WriteLine("StopEnemies");
                 if(FindGameObjectByTag("Enemy")!=null)
                 FindGameObjectByTag("Enemy").IsActive = false;
+            });
+            UIActions.RegisterAction("GameQuit", () => {
+                Game.instance.Stop();
             });
         }
         public static GameObject[] FindGameObjectsByName(string name)

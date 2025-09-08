@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<Level Name="Level1" BackgroundColor="100,149,237" Gravity="500">
+<Level Name="Level3" BackgroundColor="100,149,237" Gravity="500">
 	<TileMap Width="10" Height="10" TileWidth="64" TileHeight="64">
 		<!-- Row 0 -->
 		<Tile X="0" Y="0" IsWalkable="true" Texture="Content/Textures/grass.png" />
@@ -137,7 +137,33 @@
 	<GameObject Type="EnemyUnit" Name="Enemy1" Tag="Enemy" Position="322,512" Size="32,32" Texture="Content/Textures/enemy.png" IsActive="true">
 		<Component Type="Collider" Mass="100" Gravity="false" />
 	</GameObject>
-
+	<GameObject Type="EnemyBuilding" Name="EnemyF" Tag="Enemy" Position="384,512" Size="64,64" Texture="Content/Textures/enbuild.png" IsActive="true">
+		<GameObject Type="EnemyUnit" Name="Enemy_F" Tag="Enemy" Position="322,512" Size="32,32" Texture="Content/Textures/enemy.png" IsActive="true">
+			<Component Type="Collider" Mass="100" Gravity="false" />
+		</GameObject>
+		<Component Type="Collider" Mass="10000" Gravity="false" />
+	</GameObject>
+	<GameObject Type="EnemyBuilding" Name="EnemyF" Tag="Enemy" Position="464,512" Size="64,64" Texture="Content/Textures/enbuild.png" IsActive="true">
+		<GameObject Type="EnemyUnit" Name="Enemy_F" Tag="Enemy" Position="322,512" Size="32,32" Texture="Content/Textures/enemy.png" IsActive="true">
+			<Component Type="Collider" Mass="100" Gravity="false" />
+		</GameObject>
+		<Component Type="Collider" Mass="10000" Gravity="false" />
+	</GameObject>
+	<GameObject Type="PlayerBuilding" Name="PlayerF" Tag="Player" Position="292,128" Size="64,64" Texture="Content/Textures/enbuild.png" IsActive="true">
+		<GameObject Type="PlayerUnit" Name="PlayerF" Tag="Player" Position="322,512" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
+			<Component Type="Collider" Mass="100" Gravity="false" />
+		</GameObject>
+		<Component Type="Collider" Mass="10000" Gravity="false" />
+	</GameObject>
+	<UIElement Type="Button" Position="100,100" Size="100,50" Color="255,255,255" Texture="Content/Textures/im1.png" IsActive="false" OnClick="StopEnemies" />
+	<UIElement Type="BuildButton" Text ="Factory" Position="100,200" Size="100,50" Color="255,122,122" Texture="Content/Textures/im1.png" IsActive="true" OnClick="">
+		<GameObject Type="PlayerBuilding" Name="PlayerF" Tag="Player" Position="384,64" Size="64,64" Texture="Content/Textures/enbuild.png" IsActive="true">
+			<GameObject Type="PlayerUnit" Name="PlayerF" Tag="Player" Position="322,512" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
+				<Component Type="Collider" Mass="100" Gravity="false" />
+			</GameObject>
+			<Component Type="Collider" Mass="10000" Gravity="false" />
+		</GameObject>
+	</UIElement> />
 	<UIElement Type="PlayerController" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
 	<UIElement Type="AIController" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
 	<UIElement Type="GameController" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>

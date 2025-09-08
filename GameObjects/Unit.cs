@@ -14,7 +14,7 @@ namespace _2D_Engine_Sokov.GameObjects
         public float DetectionRange { get; set; } = 200f;
         public float MoveSpeed { get; set; } = 100f;
         public List<Vector2> Path { get; set; } = new List<Vector2>();
-        public Unit Target { get; set; }
+        public GameObject Target { get; set; }
         protected float AttackCooldown { get; set; } = 1f;
         protected float CooldownTimer { get; set; }
         protected float StopCooldown { get; set; } = 1f;
@@ -61,7 +61,10 @@ namespace _2D_Engine_Sokov.GameObjects
 
             if (Target != null && Vector2.Distance(Position, Target.Position) <= AttackRange)
             {
-                Attack(Target);
+                if(Target.GetType().IsSubclassOf(typeof(Unit)))
+                Attack((Unit)Target);
+                else if (Target.GetType().IsSubclassOf(typeof(Building)))
+                    Attack((Building)Target);
             }
             else if (Path.Count > 0)
             {                
@@ -74,7 +77,7 @@ namespace _2D_Engine_Sokov.GameObjects
         protected void DetectUnits()
         {
             var units = LogicSystem.FindGameObjectsByTag(this is PlayerUnit ? "Enemy" : "Player");
-            Unit closest = null;
+            Sprite closest = null;
             float closestDistance = float.MaxValue;
 
             foreach (var unit in units)
@@ -83,7 +86,7 @@ namespace _2D_Engine_Sokov.GameObjects
                 float distance = Vector2.Distance(Position, unit.Position);
                 if (distance <= DetectionRange && distance < closestDistance)
                 {
-                    closest = unit as Unit;
+                    closest = unit as Sprite;
                     closestDistance = distance;
                 }
             }
@@ -123,7 +126,28 @@ namespace _2D_Engine_Sokov.GameObjects
                 RenderSystem.DrawLine(Position , target.Position  , Color.Gray, 1f);
             }, framesToLive: 2);
         }
+        protected void Attack(Building target)
+        {
+            if (CooldownTimer <= 0)
+            {
+                RenderSystem.SubmitPersistentCommand(() => {
+                    RenderSystem.DrawLine(Position, target.Position, Color.Red, 2f);
+                }, framesToLive: 3);
+                target.Health -= AttackDamage;
+                CooldownTimer = AttackCooldown;
+                if (target.Health <= 0)
+                {
+                    Game.instance._currentLevel.TileMap.DeoccupyTile(target.Position);
+                    Game.instance._currentLevel.TileMap.DeoccupyTile(Game.instance._currentLevel.TileMap.GridToWorldPosition(target.OccupiedTilePosition.X, target.OccupiedTilePosition.Y));
 
+                    target.IsActive = false;
+                    LogicSystem.RemoveGameObject(target);
+                }
+            }
+            else RenderSystem.SubmitPersistentCommand(() => {
+                RenderSystem.DrawLine(Position, target.Position, Color.Gray, 1f);
+            }, framesToLive: 2);
+        }
         protected void MoveAlongPath(float deltaTime)
         {
             if (Path.Count == 0) return;

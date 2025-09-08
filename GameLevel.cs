@@ -18,5 +18,6 @@ namespace _2D_Engine_Sokov
         public TileMap TileMap { get; set; }
         public GameLevel() { 
         }
+
     }
 }

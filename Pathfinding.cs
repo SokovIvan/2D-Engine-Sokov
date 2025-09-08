@@ -119,6 +119,8 @@ namespace _2D_Engine_Sokov
                 current = parent;
             }
             path.Reverse();
+            //if(path.Count>1) 
+            //    path.RemoveAt(0);
             return path;
         }
     }

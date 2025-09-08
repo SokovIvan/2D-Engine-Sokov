@@ -137,6 +137,23 @@ namespace _2D_Engine_Sokov
                 case "EnemyUnit":
                     gameObject = new EnemyUnit();
                     break;
+                case "PlayerBuilding":
+                    gameObject = new PlayerBuilding();
+                    foreach (var compElement in element.Elements("GameObject"))
+                    {
+                        var child = ParseGameObject(compElement);
+                        ((PlayerBuilding)gameObject).ProduceUnit = (Unit)child;
+                    }
+                    break;
+                case "EnemyBuilding":
+
+                    gameObject = new EnemyBuilding();
+                    foreach (var compElement in element.Elements("GameObject"))
+                    {
+                        var child = ParseGameObject(compElement);
+                        ((EnemyBuilding)gameObject).ProduceUnit = (Unit)child;
+                    }
+                    break;
                 default:
                     gameObject = new GameObject();
                     break;
@@ -154,11 +171,11 @@ namespace _2D_Engine_Sokov
                 RenderSystem.EnqueueTextureLoad(sprite, texturePath);
             }
 
-            foreach (var compElement in element.Elements("GameObject"))
-            {
-                var child = ParseGameObject(compElement);
-                gameObject.AddChild(child);
-            }
+            //foreach (var compElement in element.Elements("GameObject"))
+            //{
+            //    var child = ParseGameObject(compElement);
+            //    gameObject.AddChild(child);
+            //}
 
             foreach (var compElement in element.Elements("Component"))
             {
@@ -195,8 +212,35 @@ namespace _2D_Engine_Sokov
                     };
                     RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
                     break;
+                case "BuildButton":
+                    uiElement = new BuildButton()
+                    {
+                        Position = position,
+                        Size = size,
+                        Color = color,
+                        IsActive = isActive,
+                        text = text
+                    };
+                    RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
+                    foreach (var compElement in element.Elements("GameObject"))
+                    {
+                        var child = ParseGameObject(compElement);
+                        ((BuildButton)uiElement).building = (Building)child;
+                    }
+                    break;
                 case "PlayerController":
                     uiElement = new PlayerController()
+                    {
+                        Position = position,
+                        Size = size,
+                        Color = color,
+                        IsActive = isActive,
+                        text = ""
+                    };
+                    RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
+                    break;
+                case "GameController":
+                    uiElement = new GameController()
                     {
                         Position = position,
                         Size = size,
@@ -229,6 +273,7 @@ namespace _2D_Engine_Sokov
             if (!string.IsNullOrEmpty(onClickAction))
             {
                 uiElement.OnClick = UIActions.GetAction(onClickAction);
+
             }
             return uiElement;
         }

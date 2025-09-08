@@ -64,7 +64,14 @@ namespace _2D_Engine_Sokov
                 _textures.Remove(unused.Key);
             }
         }
-
+        public static void ClearCache()
+        {
+            foreach (var entry in _textures.Values)
+            {
+                entry.Texture.Dispose();
+            }
+            _textures.Clear();
+        }
         public static void LoadTexture(object requester, string path, Action<Texture2D> callback)
         {
             _loadQueue.Enqueue(new TextureLoadRequest

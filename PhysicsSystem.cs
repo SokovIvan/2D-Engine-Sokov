@@ -23,7 +23,24 @@ namespace _2D_Engine_Sokov
         public static float GRAVITY = 500f; 
         private const float FIXED_TIMESTEP = 1f / 60f; 
         private static Thread _physicsThread;
-
+        public static void ClearBuffer()
+        {
+            lock (_bufferLock)
+            {
+                _nextPhysicsList.Clear();
+                _currentPhysicsList.Clear();
+            }
+        }
+        public static void ClearAllBuffers()
+        {
+            lock (_bufferLock)
+            {
+                _physicsBufferA.Clear();
+                _physicsBufferB.Clear();
+                _currentPhysicsList.Clear();
+                _nextPhysicsList.Clear();
+            }
+        }
         public static void Initialize()
         {
             _isRunning = true;

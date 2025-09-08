@@ -23,7 +23,7 @@ namespace _2D_Engine_Sokov
         private static readonly List<Sprite> _frameBufferB = new List<Sprite>();
         private static List<Sprite> _currentRenderList = _frameBufferA;
         private static List<Sprite> _nextFrameList = _frameBufferB;
-        private static readonly object _bufferLock = new object();
+        public static readonly object _bufferLock = new object();
 
         // Очередь команд отрисовки
         private static readonly ConcurrentQueue<Action> _drawCommands = new ConcurrentQueue<Action>();
@@ -129,6 +129,17 @@ namespace _2D_Engine_Sokov
                 }
             }
         }
+        public static void ClearAllBuffers()
+        {
+            lock (_bufferLock)
+            {
+                _frameBufferA.Clear();
+                _frameBufferB.Clear();
+                _currentRenderList.Clear();
+                _nextFrameList.Clear();
+                _uiElements.Clear(); // Очищаем UI элементы
+            }
+        }
         public static void SubmitUIElements(UIElement[] elements)
         {
             foreach (UIElement element in elements)
@@ -152,6 +163,22 @@ namespace _2D_Engine_Sokov
             lock (_bufferLock)
             {
                 _uiElements.Remove(element);
+            }
+        }
+        public static void RemoveBackgroundElement(Sprite background)
+        {
+            if (background == null) return;
+
+            lock (_bufferLock)
+            {
+                _backgrounds.Remove(background);
+            }
+        }
+        public static void ClearAllBackgrounds()
+        {
+            lock (_bufferLock)
+            {
+                _backgrounds.Clear();
             }
         }
         public static void DrawLine(Vector2 start, Vector2 end, Color color, float thickness = 1f)

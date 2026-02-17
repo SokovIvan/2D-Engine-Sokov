@@ -23,23 +23,23 @@ namespace _2D_Engine_Sokov.UIElements
             if (Game.keyboardState.IsKeyDown(Keys.W))
             {
                 var camera = RenderSystem.GetCamera();
-                camera.Move(new Microsoft.Xna.Framework.Vector2(0, 1000 * (float)deltaTime)); // Движение вправо          
+                camera.Move(new Microsoft.Xna.Framework.Vector2(0, -1000 * (float)deltaTime)); // Движение вправо          
             }
             if (Game.keyboardState.IsKeyDown(Keys.S))
             {
                 var camera = RenderSystem.GetCamera();
-                camera.Move(new Microsoft.Xna.Framework.Vector2(0, -1000 * (float)deltaTime)); // Движение вправо      
+                camera.Move(new Microsoft.Xna.Framework.Vector2(0, 1000 * (float)deltaTime)); // Движение вправо      
 
             }
             if (Game.keyboardState.IsKeyDown(Keys.A))
             {
                 var camera = RenderSystem.GetCamera();
-                camera.Move(new Microsoft.Xna.Framework.Vector2(1000 * (float)deltaTime, 0)); // Движение вправо                                                
+                camera.Move(new Microsoft.Xna.Framework.Vector2(-1000 * (float)deltaTime, 0)); // Движение вправо                                                
             }
             if (Game.keyboardState.IsKeyDown(Keys.D))
             {
                 var camera = RenderSystem.GetCamera();
-                camera.Move(new Microsoft.Xna.Framework.Vector2(-1000 * (float)deltaTime, 0)); // Движение вправо                                                
+                camera.Move(new Microsoft.Xna.Framework.Vector2(1000 * (float)deltaTime, 0)); // Движение вправо                                                
             }
 
 

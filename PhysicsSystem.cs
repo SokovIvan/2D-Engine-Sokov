@@ -23,6 +23,19 @@ namespace _2D_Engine_Sokov
         public static float GRAVITY = 500f; 
         private const float FIXED_TIMESTEP = 1f / 60f; 
         private static Thread _physicsThread;
+
+        private static volatile bool _isPaused = false;
+
+        public static void Pause()
+        {
+            _isPaused = true;
+        }
+
+        public static void Resume()
+        {
+            _isPaused = false;
+        }
+
         public static void ClearBuffer()
         {
             lock (_bufferLock)
@@ -56,6 +69,11 @@ namespace _2D_Engine_Sokov
 
             while (_isRunning)
             {
+                if (_isPaused)
+                {
+                    Thread.Sleep(10); // Ждем снятия паузы
+                    continue;
+                }
                 float deltaTime = (float)stopwatch.Elapsed.TotalSeconds;
                 stopwatch.Restart();
                 accumulatedTime += deltaTime;
@@ -84,28 +102,51 @@ namespace _2D_Engine_Sokov
             }
             for (int i = 0; i < processingList.Count; i++)
             {
-                processingList[i].IsOnGround = false;
+                try {
+                    processingList[i].IsOnGround = false;
+                }
+                catch {
+                    Console.WriteLine("indexP1");
+                    continue;
+                }
+
             }
             for (int i = 0; i < processingList.Count; i++)
             {
-                GameObject obj = processingList[i];
-                if (obj.IsStatic || !obj.IsActive) continue;
-                if (obj.GravityEnabled && !obj.IsOnGround)
+                try
                 {
-                    obj.Velocity += new Vector2(0, GRAVITY * deltaTime);
+                    GameObject obj = processingList[i];
+                    if (obj.IsStatic || !obj.IsActive) continue;
+                    if (obj.GravityEnabled && !obj.IsOnGround)
+                    {
+                        obj.Velocity += new Vector2(0, GRAVITY * deltaTime);
+                    }
+                    if (obj.Velocity.LengthSquared() > MAX_SPEED * MAX_SPEED)
+                    {
+                        obj.Velocity = Vector2.Normalize(obj.Velocity) * MAX_SPEED;
+                    }
                 }
-                if (obj.Velocity.LengthSquared() > MAX_SPEED * MAX_SPEED)
+                catch
                 {
-                    obj.Velocity = Vector2.Normalize(obj.Velocity) * MAX_SPEED;
+                    Console.WriteLine("indexP2");
+                    continue;
                 }
             }
 
             for (int i = 0; i < processingList.Count; i++)
             {
-                GameObject obj = processingList[i];
-                if (!obj.IsActive || obj.IsStatic) continue;
-                Vector2 newPosition = obj.Position + obj.Velocity * deltaTime;
-                obj.Position = newPosition;
+                try
+                {
+                    GameObject obj = processingList[i];
+                    if (!obj.IsActive || obj.IsStatic) continue;
+                    Vector2 newPosition = obj.Position + obj.Velocity * deltaTime;
+                    obj.Position = newPosition;
+                }
+                catch
+                {
+                    Console.WriteLine("indexP3");
+                    continue;
+                }
             }
 
             const int COLLISION_ITERATIONS = 3;
@@ -113,20 +154,27 @@ namespace _2D_Engine_Sokov
             {
                 for (int i = 0; i < processingList.Count; i++)
                 {
-                    GameObject objA = processingList[i];
-                    if (!objA.CollisionEnabled || !objA.IsActive || objA.IsStatic) continue;
-
-                    for (int j = i + 1; j < processingList.Count; j++)
+                    try
                     {
-                        GameObject objB = processingList[j];
-                        if (!objB.CollisionEnabled || !objB.IsActive) continue;
+                        GameObject objA = processingList[i];
+                        if (!objA.CollisionEnabled || !objA.IsActive || objA.IsStatic) continue;
 
-                        if (CheckAABBCollision(objA, objB, out Vector2 normal, out float depth))
+                        for (int j = i + 1; j < processingList.Count; j++)
                         {
-                            ResolveCollision(objA, objB, normal, depth);
-                            //Debug.WriteLine($"Collision: {objA.Tag}-{objB.Tag} | N: {normal} | D: {depth}");
-                            UpdateGroundState(objA, objB, normal);
+                            GameObject objB = processingList[j];
+                            if (!objB.CollisionEnabled || !objB.IsActive) continue;
+
+                            if (CheckAABBCollision(objA, objB, out Vector2 normal, out float depth))
+                            {
+                                ResolveCollision(objA, objB, normal, depth);
+                                //Debug.WriteLine($"Collision: {objA.Tag}-{objB.Tag} | N: {normal} | D: {depth}");
+                                UpdateGroundState(objA, objB, normal);
+                            }
                         }
+                    }
+                    catch {
+                        Console.WriteLine("indexP4");
+                        continue;
                     }
                 }
             }

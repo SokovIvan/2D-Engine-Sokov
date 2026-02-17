@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Text;
 
 namespace _2D_Engine_Sokov
 {
@@ -139,37 +140,68 @@ namespace _2D_Engine_Sokov
                 Start();
                 return;
             }
+            // Рисуем текст, только если он есть
             if (!string.IsNullOrEmpty(Text))
-            {            
+            {
+                var bounds = this.Bounds;
+                // Проверяем, изменился ли текст, размер шрифта или позиция (чтобы не считать заново каждый кадр)
                 if (_cachedText != Text || _cachedFontSize != FontSize || _cachedTextPosition == null)
                 {
-                    var bounds = this.Bounds;
+
                     var font = this.Font ?? RenderSystem.GetDefaultFont();
+
                     if (font == null) return;
 
-                    Vector2 textSize = font.MeasureString(Text) * FontSize;
+                    // --- НОВАЯ ЛОГИКА ПЕРЕНОСА СТРОК ---
+                    float maxWidth = bounds.Width;
 
-                    _cachedTextPosition = AutoCenterText
-                        ? new Vector2(
-                            bounds.X + textSize.X/ 4 ,
-                            bounds.Y + (bounds.Height - textSize.Y) / 2)
-                        : new Vector2(bounds.X, bounds.Y);
+                    // Разбиваем текст на строки
+                    List<string> lines = WrapText(font, Text, FontSize, maxWidth);
 
-                    _cachedTextPosition += TextOffset;
+                    // Вычисляем общую высоту всего блока текста
+                    float totalTextHeight = lines.Count * font.MeasureString("A").Y * FontSize;
+
+                    // Центрируем блок текста вертикально внутри элемента (если нужно)
+                    float startY = bounds.Y + bounds.Height/2 - totalTextHeight - TextOffset.Y; //+ (bounds.Height - totalTextHeight) / 2;
+
+                    // Если текст больше высоты элемента, можно либо обрезать, либо начать с начала (здесь начинаем с начала)
+                    //if (startY < bounds.Y) startY = bounds.Y;
+
+                    _cachedLines = lines; // Сохраняем строки в кэш
+                    _cachedStartY = startY; // Сохраняем стартовую позицию Y
                     _cachedText = Text;
                     _cachedFontSize = FontSize;
                 }
 
-                RenderSystem.SubmitPersistentCommand(() => {
-                    RenderSystem.DrawText(
-                        Font ?? RenderSystem.GetDefaultFont(),
-                        Text,
-                        _cachedTextPosition.Value,
-                        TextColor,
-                        FontSize,
-                        false
-                    );
-                }, framesToLive: 2, useCamera: false);
+                // Отрисовка каждой строки по очереди
+                if (_cachedLines != null)
+                {
+                    var font = this.Font ?? RenderSystem.GetDefaultFont();
+                    float lineHeight = font.MeasureString("A").Y * FontSize;
+
+                    for (int i = 0; i < _cachedLines.Count; i++)
+                    {
+                        string line = _cachedLines[i];
+                        Vector2 linePosition = new Vector2(bounds.X + TextOffset.X, _cachedStartY + (i * lineHeight) + TextOffset.Y);
+
+                        // Используем SubmitPersistentCommand для отрисовки (как было раньше)
+                        // Важно: замыкаем переменные правильно
+                        string lineToDraw = line;
+                        Vector2 posToDraw = linePosition;
+
+                        RenderSystem.SubmitPersistentCommand(() =>
+                        {
+                            RenderSystem.DrawText(
+                                font,
+                                lineToDraw,
+                                posToDraw,
+                                TextColor,
+                                FontSize,
+                                false
+                            );
+                        }, framesToLive: 3, useCamera: false);
+                    }
+                }
             }
         }
 
@@ -251,6 +283,50 @@ namespace _2D_Engine_Sokov
                     refHeight * _scale.Y
                 );
             }
+        }
+        // --- ВСПОМОГАТЕЛЬНЫЙ МЕТОД ДЛЯ ПЕРЕНОСА ---
+        private List<string> _cachedLines;
+        private float _cachedStartY;
+
+        private List<string> WrapText(SpriteFont font, string text, float scale, float maxWidth)
+        {
+            List<string> lines = new List<string>();
+
+            // Разбиваем текст на слова
+            string[] words = text.Split(' ');
+            if (words.Length == 0) return lines;
+
+            StringBuilder currentLine = new StringBuilder(words[0]);
+
+            for (int i = 1; i < words.Length; i++)
+            {
+                string word = words[i];
+
+                // Измеряем текущую строку + новое слово
+                string testLine = currentLine.ToString() + " " + word;
+                float testWidth = font.MeasureString(testLine).X * scale;
+
+                if (testWidth <= maxWidth)
+                {
+                    // Если влезает, добавляем слово к текущей строке
+                    currentLine.Append(" ").Append(word);
+                }
+                else
+                {
+                    // Если не влезает, сохраняем текущую строку и начинаем новую с этого слова
+                    lines.Add(currentLine.ToString());
+                    currentLine.Clear();
+                    currentLine.Append(word);
+                }
+            }
+
+            // Добавляем последнюю строку
+            if (currentLine.Length > 0)
+            {
+                lines.Add(currentLine.ToString());
+            }
+
+            return lines;
         }
     }
 }

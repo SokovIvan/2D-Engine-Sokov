@@ -29,6 +29,18 @@ namespace _2D_Engine_Sokov
         private static double _updateInterval = 1000.0 / _targetUpdateRate;
 
         public static event Action OnLogicUpdate;
+        private static volatile bool _isPaused = false;
+
+        public static void Pause()
+        {
+            _isPaused = true;
+        }
+
+        public static void Resume()
+        {
+            _isPaused = false;
+        }
+
         public static void ClearBuffer()
         {
             lock (_bufferLock)
@@ -92,6 +104,12 @@ namespace _2D_Engine_Sokov
             });
             UIActions.RegisterAction("GameQuit", () => {
                 Game.instance.Stop();
+            });
+            UIActions.RegisterAction("Continue", () => {
+                Game.instance.LoadLevel("Content/Levels/Level0.xml");
+            });
+            UIActions.RegisterAction("StartGame", () => {
+                Game.instance.LoadLevel("Content/Levels/Level0.xml");
             });
         }
         public static GameObject[] FindGameObjectsByName(string name)
@@ -158,6 +176,11 @@ namespace _2D_Engine_Sokov
 
             while (_isRunning)
             {
+                if (_isPaused)
+                {
+                    Thread.Sleep(10); 
+                    continue;
+                }
                 double currentTime = timer.Elapsed.TotalMilliseconds;
                 double deltaTime = currentTime - lastUpdateTime;
 

@@ -78,8 +78,12 @@ namespace _2D_Engine_Sokov
         }
         public static void DisposeUIElement(UIElement uIElement)
         {
-            if(instance._UIElements.Contains(uIElement))
-            instance._UIElements.Remove(uIElement);
+            if (instance._UIElements.Contains(uIElement)) {
+                UISystem.UnregisterUIElement(uIElement);
+                instance._UIElements.Remove(uIElement);
+                RenderSystem.RemoveUIElement(uIElement);
+            }
+
         }
         public static void SubmitObject(GameObject gameObject) {
             instance._gameObjects.AddLast(gameObject);
@@ -109,7 +113,7 @@ namespace _2D_Engine_Sokov
         }
         private void Render()
         {
-            RenderSystem.SubmitSprite(instance._currentLevel.TileMap.MapSprite);
+            if(instance._currentLevel.TileMap!=null) RenderSystem.SubmitSprite(instance._currentLevel.TileMap.MapSprite);
             RenderSystem.SubmitSprites(_gameObjects.OfType<Sprite>().Where(s => s.IsActive).ToArray());
         }
         private void PhysicsUpdate()
@@ -131,16 +135,26 @@ namespace _2D_Engine_Sokov
         public void LoadLevel(string path)
         {
             loading = true;
-
+            PhysicsSystem.Pause();
+            LogicSystem.Pause();
+            RenderSystem.Pause();
+            UISystem.Pause();
+            Thread.Sleep(50);
             // Полная очистка всех систем
             LogicSystem.ClearAllBuffers();
             PhysicsSystem.ClearAllBuffers();
             RenderSystem.ClearAllBuffers();
             UISystem.ClearAllUIElements();
-
+            Thread.Sleep(50);
             // Очистка внутренних списков
-            _gameObjects.Clear();
-            _UIElements.Clear();
+            lock (_gameObjects) // Важно: защищаем список игры
+            {
+                _gameObjects.Clear();
+            }
+            lock (_UIElements)
+            {
+                _UIElements.Clear();
+            }
 
             if (_currentLevel != null)
             {
@@ -174,7 +188,12 @@ namespace _2D_Engine_Sokov
             GC.Collect();
             GC.WaitForPendingFinalizers();
 
+            PhysicsSystem.Resume();
+            LogicSystem.Resume();
+            RenderSystem.Resume();
+            UISystem.Resume();
             loading = false;
         }
+
     }
 }

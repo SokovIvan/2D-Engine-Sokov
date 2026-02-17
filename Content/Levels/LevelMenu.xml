@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Level Name="LevelMenu" BackgroundColor="0,0,0" Gravity="500">
+
+	<Background>
+		<Sprite Texture="Content/Textures/im1.png" Position="-50,0" Scale="1,1" />
+	</Background>
+	<UIElement Type="Button" TextOffset="60,50" Position="300,50" Size ="200,100" Text ="Start" OnClick="StartGame"  Color="0,0,0" Texture="Content/Textures/im1.png"/>
+	<UIElement Type="Button" TextOffset="35,50" Position="300,200" Size ="200,100" Text ="Continue" OnClick="Continue" Color="0,0,0"  Texture="Content/Textures/im1.png"/>
+	<UIElement Type="Button" TextOffset="60,50" Position="300,350" Size ="200,100" Text ="Exit" OnClick="GameQuit" Color="0,0,0"  Texture="Content/Textures/im1.png"/>
+
+</Level>

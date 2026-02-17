@@ -15,7 +15,17 @@ namespace _2D_Engine_Sokov
         public static GraphicsDevice _graphicsDevice;
         private static SpriteBatch _spriteBatch;
         private static bool _isRunning;
+        private static volatile bool _isPaused = false;
 
+        public static void Pause()
+        {
+            _isPaused = true;
+        }
+
+        public static void Resume()
+        {
+            _isPaused = false;
+        }
         private static readonly Dictionary<string, SpriteFont> _fontCache = new Dictionary<string, SpriteFont>();
 
         // Система двойной буферизации для спрайтов
@@ -324,7 +334,10 @@ namespace _2D_Engine_Sokov
                     Exit();
                     return;
                 }
-
+                if (_isPaused)
+                {
+                    return;
+                }
                 List<Sprite> renderList;
                 List<UIElement> uiList;
                 lock (_bufferLock)

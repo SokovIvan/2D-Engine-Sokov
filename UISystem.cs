@@ -26,6 +26,18 @@ namespace _2D_Engine_Sokov
         private static readonly object _updateLock = new object();
         private static int _targetUpdateRate = 60;
         private static double _updateInterval = 1000.0 / _targetUpdateRate;
+        private static volatile bool _isPaused = false;
+
+        public static void Pause()
+        {
+            _isPaused = true;
+        }
+
+        public static void Resume()
+        {
+            _isPaused = false;
+        }
+
         public static void Initialize()
         {
             _previousMouseState = Mouse.GetState();
@@ -44,6 +56,18 @@ namespace _2D_Engine_Sokov
         {
             _uiElements.Clear();
         }
+        public static UIElement[] FindUIElementsByType(Type type)
+        {
+            if (_uiElements.Count > 0)
+                return _uiElements.Where(s => s.IsActive && (s.GetType() == type || s.GetType().IsSubclassOf(type))).ToArray();
+            return Array.Empty<UIElement>();
+        }
+        public static UIElement[] FindUIElementsByName(string name)
+        {
+            if (_uiElements.Count > 0)
+                return _uiElements.Where(s => s.IsActive && s.Name == name).ToArray();
+            return Array.Empty<UIElement>();
+        }
         private static void UIThreadLoop()
         {
             double lastUpdateTime = 0;
@@ -51,6 +75,11 @@ namespace _2D_Engine_Sokov
 
             while (_isRunning)
             {
+                if (_isPaused)
+                {
+                    Thread.Sleep(10); // Ждем снятия паузы
+                    continue;
+                }
                 double currentTime = timer.Elapsed.TotalMilliseconds;
                 double deltaTime = currentTime - lastUpdateTime;
 
@@ -76,12 +105,15 @@ namespace _2D_Engine_Sokov
             {
                 CheckClickEvents();
             }
-            try { 
-            foreach (UIElement element in _uiElements) {
-                element.Update(deltaTime);
+            try {
+                foreach (UIElement element in _uiElements)
+                {
+                    element.Update(deltaTime);
+                }
             }
-            }
-            catch { }
+            catch(Exception e) { Console.WriteLine("UIeLement exception "+ e.ToString()); }
+
+
         }
 
         public static void RegisterUIElement(UIElement element)

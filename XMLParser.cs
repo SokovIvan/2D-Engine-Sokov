@@ -192,11 +192,12 @@ namespace _2D_Engine_Sokov
             string typeName = element.Attribute("Type")?.Value ?? "UIElement";
             string text = element.Attribute("Text")?.Value ?? " ";
             Vector2 position = ParseVector2(element.Attribute("Position")?.Value) ?? Vector2.Zero;
+            Vector2 textOffset = ParseVector2(element.Attribute("TextOffset")?.Value) ?? Vector2.Zero;
             Vector2 size = ParseVector2(element.Attribute("Size")?.Value) ?? new Vector2(100, 50);
             Color color = ParseColor(element.Attribute("Color")?.Value) ?? Color.White;
             bool isActive = bool.Parse(element.Attribute("IsActive")?.Value ?? "true");
             string texturePath = element.Attribute("Texture")?.Value;
-
+            float rate = float.Parse(element.Attribute("Rate")?.Value ?? "10");
             UIElement uiElement;
 
             switch (typeName)
@@ -208,7 +209,8 @@ namespace _2D_Engine_Sokov
                         Size = size,
                         Color = color,
                         IsActive = isActive,
-                        text = text
+                        text = text,
+                        TextOffset = textOffset
                     };
                     RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
                     break;
@@ -260,6 +262,68 @@ namespace _2D_Engine_Sokov
                         text = ""
                     };
                     RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
+                    break;
+                case "EducationController":
+                    uiElement = new EducationController()
+                    {
+                        Position = position,
+                        Size = size,
+                        Color = color,
+                        IsActive = isActive,
+                        text = ""
+                    };
+                    RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
+                    break;
+                case "Animation":
+                    Animation anim = new Animation()
+                    {
+                        Position = position,
+                        Size = size,
+                        Color = color,
+                        IsActive = isActive,
+                        TextOffset = textOffset,
+                        time_rate = rate,
+                    };
+
+                    var frames = element.Elements("Component").ToList();
+                    if (frames.Count > 0)
+                    {
+                        anim.AnimFrameTextures = new Texture2D[frames.Count];
+                        anim.textsFrames = new string[frames.Count];
+                        anim.colorsFrames = new Color[frames.Count];
+                        anim.positionFrames = new Vector2[frames.Count];
+                        anim.scaleFrames = new Vector2[frames.Count];
+
+                        for (int i = 0; i < frames.Count; i++)
+                        {
+                            XElement frameEl = frames[i];
+           
+                            string frameTexturePath = frameEl.Attribute("Texture")?.Value;
+                            if (!string.IsNullOrEmpty(frameTexturePath))
+                            {
+                                try
+                                {
+                                    using var stream = System.IO.File.OpenRead(frameTexturePath); 
+                                    anim.AnimFrameTextures[i] = Texture2D.FromStream(RenderSystem._graphicsDevice, stream);
+                                }
+                                catch {  }
+                            }
+                            // Остальные свойства кадра
+                            anim.textsFrames[i] = frameEl.Attribute("Text")?.Value ?? "";
+
+                            string colStr = frameEl.Attribute("Color")?.Value;
+                            anim.colorsFrames[i] = ParseColor(colStr) ?? Color.White;
+
+                            string posStr = frameEl.Attribute("Position")?.Value;
+                            anim.positionFrames[i] = ParseVector2(posStr) ?? Vector2.Zero;
+
+                            string sizeStr = frameEl.Attribute("Size")?.Value;
+                            Vector2 frameSize = ParseVector2(sizeStr) ?? new Vector2(1, 1);
+
+                            anim.scaleFrames[i] = frameSize;
+                        }
+                    }
+                    uiElement = anim;
                     break;
                 default:
                     uiElement = new UIElement()

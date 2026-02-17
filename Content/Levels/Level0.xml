@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<Level Name="Level3" BackgroundColor="100,149,237" Gravity="500">
+<Level Name="Level0" BackgroundColor="100,149,237" Gravity="500">
 	<TileMap Width="10" Height="10" TileWidth="64" TileHeight="64">
 		<!-- Row 0 -->
 		<Tile X="0" Y="0" IsWalkable="true" Texture="Content/Textures/grass.png" />
@@ -125,47 +125,52 @@
 	<GameObject Type="PlayerUnit" Name="Player1" Tag="Player" Position="32,32" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
 		<Component Type="Collider" Mass="100" Gravity="false" />
 	</GameObject>
-	<GameObject Type="PlayerUnit" Name="Player2" Tag="Player" Position="256,32" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
-		<Component Type="Collider" Mass="100" Gravity="false" />
-	</GameObject>
-	<GameObject Type="PlayerUnit" Name="Player2" Tag="Player" Position="512,32" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
-		<Component Type="Collider" Mass="100" Gravity="false" />
-	</GameObject>
-	<GameObject Type="EnemyUnit" Name="Enemy1" Tag="Enemy" Position="256,512" Size="32,32" Texture="Content/Textures/enemy.png" IsActive="true">
-		<Component Type="Collider" Mass="100" Gravity="false" />
-	</GameObject>
-	<GameObject Type="EnemyUnit" Name="Enemy1" Tag="Enemy" Position="322,512" Size="32,32" Texture="Content/Textures/enemy.png" IsActive="true">
-		<Component Type="Collider" Mass="100" Gravity="false" />
-	</GameObject>
-	<GameObject Type="EnemyBuilding" Name="EnemyF" Tag="Enemy" Position="384,512" Size="64,64" Texture="Content/Textures/enbuild.png" IsActive="true">
-		<GameObject Type="EnemyUnit" Name="Enemy_F" Tag="Enemy" Position="322,512" Size="32,32" Texture="Content/Textures/enemy.png" IsActive="true">
-			<Component Type="Collider" Mass="100" Gravity="false" />
-		</GameObject>
-		<Component Type="Collider" Mass="10000" Gravity="false" />
-	</GameObject>
-	<GameObject Type="EnemyBuilding" Name="EnemyF" Tag="Enemy" Position="464,512" Size="64,64" Texture="Content/Textures/enbuild.png" IsActive="true">
-		<GameObject Type="EnemyUnit" Name="Enemy_F" Tag="Enemy" Position="322,512" Size="32,32" Texture="Content/Textures/enemy.png" IsActive="true">
-			<Component Type="Collider" Mass="100" Gravity="false" />
-		</GameObject>
-		<Component Type="Collider" Mass="10000" Gravity="false" />
-	</GameObject>
-	<GameObject Type="PlayerBuilding" Name="PlayerF" Tag="Player" Position="292,128" Size="64,64" Texture="Content/Textures/enbuild.png" IsActive="true">
-		<GameObject Type="PlayerUnit" Name="PlayerF" Tag="Player" Position="322,512" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
-			<Component Type="Collider" Mass="100" Gravity="false" />
-		</GameObject>
-		<Component Type="Collider" Mass="10000" Gravity="false" />
-	</GameObject>
-	<UIElement Type="Button" Position="100,100" Size="100,50" Color="255,255,255" Texture="Content/Textures/im1.png" IsActive="false" OnClick="StopEnemies" />
-	<UIElement Type="BuildButton" Text ="Factory" Position="0,100" Size="100,50" Color="255,122,122" Texture="Content/Textures/im1.png" IsActive="true" OnClick="">
-		<GameObject Type="PlayerBuilding" Name="PlayerF" Tag="Player" Position="384,64" Size="64,64" Texture="Content/Textures/enbuild.png" IsActive="true">
-			<GameObject Type="PlayerUnit" Name="PlayerF" Tag="Player" Position="322,512" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
-				<Component Type="Collider" Mass="100" Gravity="false" />
-			</GameObject>
-			<Component Type="Collider" Mass="10000" Gravity="false" />
-		</GameObject>
-	</UIElement> />
+	<UIElement Type="Animation" TextColor ="0,0,0" Size="800,600" TextOffset="0,0" Rate="10" Position="0,0"  Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true">
+		<!-- КАДР 1: Начало сюжета -->
+		<Component Text="Давным-давно мир был разделен войной машин и людей... Но люди проиграли. Их города обращены в пепел, а армии рассеяны."
+				   Texture="Content/Textures/im2.png"
+				   Position="0,0"
+				   Size="800,600"
+				   Color="125,125,125"
+				   FontSize="24" />
+
+		<!-- КАДР 2: Развитие сюжета -->
+		<Component Text="Но ты, мой герой, остался последним командиром, способным остановить хаос. Я — последний лояльный ИИ человечества. Мои системы повреждены, но я функционирую... ради тебя."
+				   Texture="Content/Textures/im2.png"
+				   Position="0,0"
+				   Size="800,600"
+				   Color="175,125,125"
+				   FontSize="24" />
+
+		<!-- КАДР 3: Обучение - Движение камеры -->
+		<Component Text="УПРАВЛЕНИЕ: Используй клавиши W, A, S, D для перемещения камеры по полю боя."
+				   Texture="Content/Textures/im2.png"
+				   Position="0,0"
+				   Size="800,600"
+				   Color="200,125,125"
+				   FontSize="20"
+				   />
+
+		<!-- КАДР 4: Обучение - Выделение юнитов -->
+		<Component Text="ВЫБОР: Зажми ЛЕВУЮ кнопку мыши и потяни, чтобы выделить своих солдат рамкой."
+				   Texture="Content/Textures/im2.png"
+				   Position="0,0"
+				   Size="800,600"
+				   Color="225,125,125"
+				   FontSize="20"
+				   />
+
+		<!-- КАДР 5: Обучение - Атака и движение -->
+		<Component Text="АТАКА: Нажми ПРАВУЮ кнопку мыши, чтобы отправить выбранных юнитов в точку или на врага."
+				   Texture="Content/Textures/im2.png"
+				   Position="0,0"
+				   Size="800,600"
+				   Color="250,125,125"
+				   FontSize="20"
+				   />
+	</UIElement>
+
 	<UIElement Type="PlayerController" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
-	<UIElement Type="AIController" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
-	<UIElement Type="GameController" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
+	<UIElement Type="EducationController" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
 
 </Level>

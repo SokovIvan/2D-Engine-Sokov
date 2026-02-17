@@ -66,20 +66,24 @@ namespace _2D_Engine_Sokov.UIElements
                 //}
                 //Console.WriteLine(worldPos);
                 if (placingBuilding) {
-                    var build = Activator.CreateInstance(placeBuilding.GetType());
-                    var building = ((Building)build);
-                    building.Position = worldPos;
-                    building.Size = placeBuilding.Size;
-                    building.Texture = placeBuilding.Texture;
-                    building.CollisionEnabled = placeBuilding.CollisionEnabled;
-                    building.GravityEnabled = placeBuilding.GravityEnabled;
-                    building.Mass = placeBuilding.Mass;
-                    building.ProduceUnit = placeBuilding.ProduceUnit;
-                    building.ProducingTime = placeBuilding.ProducingTime;
-                    building.ProduceOffset = placeBuilding.ProduceOffset;
-                    if (building != null)
-                    {                        
-                        Game.SubmitObject(building);
+                    if (GameController.instance.playerRes >= 10) {
+                        GameController.instance.playerRes -= 10;
+                        var build = Activator.CreateInstance(placeBuilding.GetType());
+                        var building = ((Building)build);
+                        building.Position = worldPos;
+                        building.Size = placeBuilding.Size;
+                        building.Texture = placeBuilding.Texture;
+                        building.CollisionEnabled = placeBuilding.CollisionEnabled;
+                        building.GravityEnabled = placeBuilding.GravityEnabled;
+                        building.Mass = placeBuilding.Mass;
+                        if(placeBuilding.ProduceUnit!=null)
+                        building.ProduceUnit = placeBuilding.ProduceUnit;
+                        building.ProducingTime = placeBuilding.ProducingTime;
+                        building.ProduceOffset = placeBuilding.ProduceOffset;
+                        if (building != null)
+                        {
+                            Game.SubmitObject(building);
+                        }
                     }
                     placingBuilding = false;
                 }

@@ -137,6 +137,15 @@ namespace _2D_Engine_Sokov
                 case "EnemyUnit":
                     gameObject = new EnemyUnit();
                     break;
+                case "EnemyTurret":
+                    gameObject = new EnemyTurret();
+                    break;
+                case "PlayerResGen":
+                    gameObject = new PlayerResGen();
+                    break;
+                case "EnemyResGen":
+                    gameObject = new EnemyResGen();
+                    break;
                 case "PlayerBuilding":
                     gameObject = new PlayerBuilding();
                     foreach (var compElement in element.Elements("GameObject"))
@@ -214,6 +223,18 @@ namespace _2D_Engine_Sokov
                     };
                     RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
                     break;
+                case "ResShow":
+                    uiElement = new ResShow()
+                    {
+                        Position = position,
+                        Size = size,
+                        Color = color,
+                        IsActive = isActive,
+                        text = text,
+                        TextOffset = textOffset
+                    };
+                    RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
+                    break;
                 case "BuildButton":
                     uiElement = new BuildButton()
                     {
@@ -232,6 +253,17 @@ namespace _2D_Engine_Sokov
                     break;
                 case "PlayerController":
                     uiElement = new PlayerController()
+                    {
+                        Position = position,
+                        Size = size,
+                        Color = color,
+                        IsActive = isActive,
+                        text = ""
+                    };
+                    RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
+                    break;
+                case "IntermediaController":
+                    uiElement = new IntermediaController()
                     {
                         Position = position,
                         Size = size,

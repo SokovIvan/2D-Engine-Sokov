@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<Level Name="Level2" BackgroundColor="100,149,237" Gravity="500">
+<Level Name="Level5" BackgroundColor="100,149,237" Gravity="500">
 	<TileMap Width="20" Height="20" TileWidth="64" TileHeight="64">
 		<!-- Row 0: Граница и вход -->
 		<Tile X="0" Y="0" IsWalkable="false" Texture="Content/Textures/wall.png" />
@@ -442,19 +442,78 @@
 		<Tile X="19" Y="19" IsWalkable="false" Texture="Content/Textures/wall.png" />
 	</TileMap>
 
+	<!-- ТВОИ ЮНИТЫ СЛЕВА -->
+	<GameObject Type="PlayerUnit" Name="Player1" Tag="Player" Position="128,1024" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
+		<Component Type="Collider" Mass="100" Gravity="false" />
+	</GameObject>
+	<GameObject Type="PlayerUnit" Name="Player2" Tag="Player" Position="192,1024" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
+		<Component Type="Collider" Mass="100" Gravity="false" />
+	</GameObject>
+	<GameObject Type="PlayerUnit" Name="Player3" Tag="Player" Position="256,1024" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
+		<Component Type="Collider" Mass="100" Gravity="false" />
+	</GameObject>
 
-	<GameObject Type="PlayerResGen" Name="PlayerR" Tag="Player" Position="352,96" Size="64,64" Texture="Content/Textures/plbuild_resgen.png" IsActive="true">
+	<!-- ВРАГИ СПРАВА -->
+	<GameObject Type="EnemyUnit" Name="Enemy1" Tag="Enemy" Position="1088,1024" Size="32,32" Texture="Content/Textures/enemy.png" IsActive="true">
+		<Component Type="Collider" Mass="100" Gravity="false" />
+	</GameObject>
+	<GameObject Type="EnemyUnit" Name="Enemy2" Tag="Enemy" Position="1024,1024" Size="32,32" Texture="Content/Textures/enemy.png" IsActive="true">
+		<Component Type="Collider" Mass="100" Gravity="false" />
+	</GameObject>
+
+	<!-- ЗДАНИЯ СЛЕВА -->
+	<GameObject Type="PlayerBuilding" Name="PlayerF" Tag="Player" Position="132,1088" Size="64,64" Texture="Content/Textures/plbuild.png" IsActive="true">
+		<GameObject Type="PlayerUnit" Name="PlayerF" Tag="Player" Position="322,512" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
+			<Component Type="Collider" Mass="100" Gravity="false" />
+		</GameObject>
 		<Component Type="Collider" Mass="10000" Gravity="false" />
 	</GameObject>
+	<GameObject Type="PlayerResGen" Name="PlayerR" Tag="Player" Position="128,922" Size="64,64" Texture="Content/Textures/plbuild_resgen.png" IsActive="true">
+		<Component Type="Collider" Mass="10000" Gravity="false" />
+	</GameObject>
+	<!-- ВРАЖЕСКИЕ ЗДАНИЯ СПРАВА -->
+	<GameObject Type="EnemyTurret" Name="EnemyT" Tag="Enemy" Position="768,256" Size="64,64" Texture="Content/Textures/entur.png" IsActive="true">
+		<Component Type="Collider" Mass="10000" Gravity="false" />
+	</GameObject>
+	<GameObject Type="EnemyTurret" Name="EnemyT" Tag="Enemy" Position="768,756" Size="64,64" Texture="Content/Textures/entur.png" IsActive="true">
+		<Component Type="Collider" Mass="10000" Gravity="false" />
+	</GameObject>
+	<GameObject Type="EnemyBuilding" Name="EnemyF" Tag="Enemy" Position="1088,1088" Size="64,64" Texture="Content/Textures/enbuild.png" IsActive="true">
+		<GameObject Type="EnemyUnit" Name="Enemy_F" Tag="Enemy" Position="322,512" Size="32,32" Texture="Content/Textures/enemy.png" IsActive="true">
+			<Component Type="Collider" Mass="100" Gravity="false" />
+		</GameObject>
+		<Component Type="Collider" Mass="10000" Gravity="false" />
+	</GameObject>
+	<GameObject Type="EnemyResGen" Name="EnemyR" Tag="Enemy" Position="1154,1088" Size="64,64" Texture="Content/Textures/enbuild_resgen.png" IsActive="true">
+		<Component Type="Collider" Mass="10000" Gravity="false" />
+	</GameObject>
+	<GameObject Type="EnemyBuilding" Name="EnemyF" Tag="Enemy" Position="1088,256" Size="64,64" Texture="Content/Textures/enbuild.png" IsActive="true">
+		<GameObject Type="EnemyUnit" Name="Enemy_F" Tag="Enemy" Position="322,512" Size="32,32" Texture="Content/Textures/enemy.png" IsActive="true">
+			<Component Type="Collider" Mass="100" Gravity="false" />
+		</GameObject>
+		<Component Type="Collider" Mass="10000" Gravity="false" />
+	</GameObject>
+	<GameObject Type="EnemyResGen" Name="EnemyR" Tag="Enemy" Position="1154,256" Size="64,64" Texture="Content/Textures/enbuild_resgen.png" IsActive="true">
+		<Component Type="Collider" Mass="10000" Gravity="false" />
+	</GameObject>
+	<!-- КНОПКИ СТРОИТЕЛЬСТВА -->
+	<UIElement Type="BuildButton" Text ="Завод" Position="0,100" Size="120,50" Color="255,122,122" Texture="Content/Textures/im1.png" IsActive="true" OnClick="">
+		<GameObject Type="PlayerBuilding" Name="PlayerF" Tag="Player" Position="384,64" Size="64,64" Texture="Content/Textures/plbuild.png" IsActive="true">
+			<GameObject Type="PlayerUnit" Name="PlayerF" Tag="Player" Position="322,512" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
+				<Component Type="Collider" Mass="100" Gravity="false" />
+			</GameObject>
+			<Component Type="Collider" Mass="10000" Gravity="false" />
+		</GameObject>
+	</UIElement>
+	<UIElement Type="BuildButton" Text ="Генератор" Position="0,200" Size="120,50" Color="255,122,122" Texture="Content/Textures/im1.png" IsActive="true" OnClick="">
+		<GameObject Type="PlayerResGen" Name="PlayerR" Tag="Player" Position="352,96" Size="64,64" Texture="Content/Textures/plbuild_resgen.png" IsActive="true">
+			<Component Type="Collider" Mass="10000" Gravity="false" />
+		</GameObject>
+	</UIElement>
+
 	<UIElement Type="PlayerController" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
 	<UIElement Type="AIController" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
 	<UIElement Type="GameController" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
 	<UIElement Type="ResShow" Text="ResShow" Position="0,0" Size="100,50" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true" />
-
-	<UIElement Type="BuildButton" Text ="Генератор" Position="0,200" Size="120,50" Color="255,122,122" Texture="Content/Textures/im1.png" IsActive="true" OnClick="">
-			<GameObject Type="PlayerResGen" Name="PlayerR" Tag="Player" Position="352,96" Size="64,64" Texture="Content/Textures/plbuild_resgen.png" IsActive="true">
-				<Component Type="Collider" Mass="10000" Gravity="false" />
-			</GameObject>
-	</UIElement> />
 
 </Level>

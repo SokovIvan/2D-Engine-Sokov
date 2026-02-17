@@ -48,7 +48,7 @@ namespace _2D_Engine_Sokov
             EnemyAI.Initialize();
  
             while (RenderSystem._graphicsDevice==null) { }
-            LoadLevel("Content/Levels/Level1.xml");
+            LoadLevel("Content/Levels/LevelMenu.xml");
 
             _isRunning = true;
             var lastUpdate = System.Environment.TickCount;

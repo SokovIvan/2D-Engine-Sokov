@@ -445,7 +445,7 @@
 	<GameObject Type="PlayerUnit" Name="Player1" Tag="Player" Position="128,238" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
 		<Component Type="Collider" Mass="100" Gravity="false" />
 	</GameObject>
-	<GameObject Type="PlayerUnit" Name="Player2" Tag="Player" Position="1516,256" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
+	<GameObject Type="PlayerUnit" Name="Player2" Tag="Player" Position="1024,256" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
 		<Component Type="Collider" Mass="100" Gravity="false" />
 	</GameObject>
 	<GameObject Type="PlayerUnit" Name="Player2" Tag="Player" Position="1024,96" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
@@ -454,7 +454,7 @@
 	<GameObject Type="EnemyUnit" Name="Enemy1" Tag="Enemy" Position="256,1024" Size="32,32" Texture="Content/Textures/enemy.png" IsActive="true">
 		<Component Type="Collider" Mass="100" Gravity="false" />
 	</GameObject>
-	<GameObject Type="EnemyUnit" Name="Enemy1" Tag="Enemy" Position="2024,1024" Size="32,32" Texture="Content/Textures/enemy.png" IsActive="true">
+	<GameObject Type="EnemyUnit" Name="Enemy1" Tag="Enemy" Position="1024,1024" Size="32,32" Texture="Content/Textures/enemy.png" IsActive="true">
 		<Component Type="Collider" Mass="100" Gravity="false" />
 	</GameObject>
 	<GameObject Type="EnemyBuilding" Name="EnemyF" Tag="Enemy" Position="416,1024" Size="64,64" Texture="Content/Textures/enbuild.png" IsActive="true">
@@ -463,14 +463,21 @@
 		</GameObject>
 		<Component Type="Collider" Mass="10000" Gravity="false" />
 	</GameObject>
-	<GameObject Type="PlayerBuilding" Name="PlayerF" Tag="Player" Position="352,32" Size="64,64" Texture="Content/Textures/enbuild.png" IsActive="true">
+	<GameObject Type="EnemyResGen" Name="EnemyR" Tag="Enemy" Position="416,980" Size="64,64" Texture="Content/Textures/enbuild_resgen.png" IsActive="true">
+		<Component Type="Collider" Mass="10000" Gravity="false" />
+	</GameObject>
+	<GameObject Type="PlayerBuilding" Name="PlayerF" Tag="Player" Position="352,32" Size="64,64" Texture="Content/Textures/plbuild.png" IsActive="true">
 		<GameObject Type="PlayerUnit" Name="PlayerF" Tag="Player" Position="352,64" Size="32,32" Texture="Content/Textures/player.png" IsActive="true">
 			<Component Type="Collider" Mass="100" Gravity="false" />
 		</GameObject>
 		<Component Type="Collider" Mass="10000" Gravity="false" />
 	</GameObject>
+	<GameObject Type="PlayerResGen" Name="PlayerR" Tag="Player" Position="352,96" Size="64,64" Texture="Content/Textures/plbuild_resgen.png" IsActive="true">
+		<Component Type="Collider" Mass="10000" Gravity="false" />
+	</GameObject>
 	<UIElement Type="PlayerController" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
 	<UIElement Type="AIController" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
 	<UIElement Type="GameController" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
+	<UIElement Type="ResShow" Text="ResShow" Position="0,0" Size="100,50" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true" />
 
 </Level>

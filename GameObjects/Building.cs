@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using _2D_Engine_Sokov.UIElements;
 using Microsoft.Xna.Framework;
 namespace _2D_Engine_Sokov.GameObjects
 {
@@ -50,19 +51,25 @@ namespace _2D_Engine_Sokov.GameObjects
             if(ProduceUnit==null)                         
                 return;
             if (ProduceTimer > ProducingTime) {
-                ProduceTimer = 0f;                
-                Type t = ProduceUnit.GetType();
-                Unit unit = (Unit)Activator.CreateInstance(t);
-                unit.Size = ProduceUnit.Size;
-                unit.Texture = ProduceUnit.Texture;
-                unit.CollisionEnabled = ProduceUnit.CollisionEnabled;
-                unit.GravityEnabled = ProduceUnit.GravityEnabled;
-                unit.Mass = ProduceUnit.Mass;
-                if (unit != null)
+                if ((Tag == "Enemy" && GameController.instance.enemyRes > 0)|| (Tag == "Player" && GameController.instance.playerRes > 0))
                 {
-                    unit.Position = Position + ProduceOffset;
-                    Game.SubmitObject(unit);
+                    if(Tag == "Enemy") GameController.instance.enemyRes -= 1;
+                    if (Tag == "Player") GameController.instance.playerRes -= 1;
+                    ProduceTimer = 0f;
+                    Type t = ProduceUnit.GetType();
+                    Unit unit = (Unit)Activator.CreateInstance(t);
+                    unit.Size = ProduceUnit.Size;
+                    unit.Texture = ProduceUnit.Texture;
+                    unit.CollisionEnabled = ProduceUnit.CollisionEnabled;
+                    unit.GravityEnabled = ProduceUnit.GravityEnabled;
+                    unit.Mass = ProduceUnit.Mass;
+                    if (unit != null)
+                    {
+                        unit.Position = Position + ProduceOffset;
+                        Game.SubmitObject(unit);
+                    }
                 }
+
             }
                 
         }

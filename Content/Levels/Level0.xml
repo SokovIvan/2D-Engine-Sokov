@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<Level Name="Level0" BackgroundColor="100,149,237" Gravity="500">
+<Level Name="Level0" BackgroundColor="100,149,237" Gravity="500" Music="Content/Music/music.mp3">
 	<TileMap Width="10" Height="10" TileWidth="64" TileHeight="64">
 		<!-- Row 0 -->
 		<Tile X="0" Y="0" IsWalkable="true" Texture="Content/Textures/grass.png" />

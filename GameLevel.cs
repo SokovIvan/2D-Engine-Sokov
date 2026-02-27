@@ -16,6 +16,7 @@ namespace _2D_Engine_Sokov
         public float gravityForce= 500f;
         public string Name="Unnamed";
         public TileMap TileMap { get; set; }
+        public string MusicPath { get; set; }
         public GameLevel() { 
         }
 

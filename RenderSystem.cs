@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Content.Pipeline.Graphics;
 using Microsoft.Xna.Framework.Graphics;
 namespace _2D_Engine_Sokov
@@ -16,7 +17,7 @@ namespace _2D_Engine_Sokov
         private static SpriteBatch _spriteBatch;
         private static bool _isRunning;
         private static volatile bool _isPaused = false;
-
+        public static ContentManager Content;
         public static void Pause()
         {
             _isPaused = true;
@@ -100,6 +101,7 @@ namespace _2D_Engine_Sokov
             new Thread(() =>
             {
                 _game = new RenderGame(width, height);
+                Content = _game.Content; // Добавьте эту строку
                 var graphics = new GraphicsDeviceManager(_game)
                 {
                     PreferredBackBufferWidth = width,

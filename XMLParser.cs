@@ -32,7 +32,9 @@ namespace _2D_Engine_Sokov
                 gameObjects = new List<GameObject>(),
                 uIElements = new List<UIElement>(),
                 backgrounds = new List<Sprite>(),
-                TileMap = ParseTileMap(root.Element("TileMap"))
+                TileMap = ParseTileMap(root.Element("TileMap")),
+                MusicPath = root.Attribute("Music")?.Value,
+
             };
 
             // Парсинг игровых объектов

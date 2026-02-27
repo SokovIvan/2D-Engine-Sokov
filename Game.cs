@@ -46,7 +46,8 @@ namespace _2D_Engine_Sokov
             UISystem.Initialize();
             RenderSystem.EnableFrustumCulling(true);
             EnemyAI.Initialize();
- 
+            SoundSystem.Initialize();
+
             while (RenderSystem._graphicsDevice==null) { }
             LoadLevel("Content/Levels/LevelMenu.xml");
 
@@ -69,6 +70,7 @@ namespace _2D_Engine_Sokov
             LogicSystem.Shutdown();
             PhysicsSystem.Shutdown();
             RenderSystem.Shutdown();
+            SoundSystem.Shutdown();
 
         }
         public static void DisposeObject(GameObject gameObject)
@@ -192,6 +194,14 @@ namespace _2D_Engine_Sokov
             LogicSystem.Resume();
             RenderSystem.Resume();
             UISystem.Resume();
+            if (!string.IsNullOrEmpty(_currentLevel.MusicPath))
+            {
+                // Можно сделать путь абсолютным, если нужно
+                string musicPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _currentLevel.MusicPath);
+                // или просто передать как есть, если путь относительный от .exe
+                SoundSystem.PlayBackgroundMusic(musicPath);
+            }
+            else SoundSystem.StopMusic();
             loading = false;
         }
 

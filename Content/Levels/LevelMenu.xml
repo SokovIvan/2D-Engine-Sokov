@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<Level Name="LevelMenu" BackgroundColor="0,0,0" Gravity="500">
+<Level Name="LevelMenu" BackgroundColor="0,0,0" Gravity="500" Music="Content/Music/HOISFHNB.mp3">
 
 	<Background>
 		<Sprite Texture="Content/Textures/im1.png" Position="-50,0" Scale="1,1" />

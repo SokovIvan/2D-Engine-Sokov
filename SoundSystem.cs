@@ -49,14 +49,7 @@ namespace _2D_Engine_Sokov
                 _outputDevice.Play();
 
                 // Зацикливание
-                _outputDevice.PlaybackStopped += (s, e) =>
-                {
-                    if (_audioStream != null)
-                    {
-                        _audioStream.Position = 0;
-                        _outputDevice?.Play();
-                    }
-                };
+                _outputDevice.PlaybackStopped += LoopHandler;
 
                 Console.WriteLine($"Запущена музыка: {fullPath}");
             }
@@ -68,13 +61,22 @@ namespace _2D_Engine_Sokov
 
         public static void StopMusic()
         {
-            _outputDevice?.Stop();
-            _outputDevice?.Dispose();
-            _audioStream?.Dispose();
-            _outputDevice = null;
-            _audioStream = null;
+            if (_outputDevice != null)
+            {
+                _outputDevice.PlaybackStopped -= LoopHandler; // обязательно отключаем событие!
+                _outputDevice.Stop();
+                _outputDevice.Dispose();
+                _outputDevice = null;
+            }
         }
-
+        private static void LoopHandler(object sender, StoppedEventArgs e)
+        {
+            if (_audioStream != null && _outputDevice != null)
+            {
+                _audioStream.Position = 0;
+                _outputDevice.Play();
+            }
+        }
         public static void Pause() => _outputDevice?.Pause();
         public static void Resume() => _outputDevice?.Play();
 
@@ -91,6 +93,11 @@ namespace _2D_Engine_Sokov
         public static void Shutdown()
         {
             StopMusic();
+            _audioStream?.Dispose();
+            _outputDevice?.Dispose();
+            _audioStream = null;
+
+            _outputDevice = null;
         }
     }
 }

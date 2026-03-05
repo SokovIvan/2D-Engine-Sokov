@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<Level Name="Level3" BackgroundColor="100,149,237" Gravity="500">
+<Level Name="Level3" BackgroundColor="100,149,237" Gravity="500" Music="Content/Music/Neon Dreams ext v2.mp3">
 	<TileMap Width="20" Height="20" TileWidth="64" TileHeight="64">
 		<!-- Row 0: Верхняя граница -->
 		<Tile X="0" Y="0" IsWalkable="false" Texture="Content/Textures/wall.png" />

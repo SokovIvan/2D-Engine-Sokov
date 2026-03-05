@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<Level Name="LevelIntermedia_3" BackgroundColor="100,149,237" Gravity="500">
+<Level Name="LevelIntermedia_3" BackgroundColor="100,149,237" Gravity="500"  Music="Content/Music/отпустить спидап3.mp3">
 
 
 	<UIElement Type="Animation" TextColor ="0,0,0" Size="800,600" TextOffset="0,0" Rate="10" Position="0,0"  Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true">

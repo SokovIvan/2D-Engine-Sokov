@@ -23,15 +23,6 @@ namespace _2D_Engine_Sokov.GameObjects
         {
             base.Update(deltaTime);
 
-           /* var keyboard = Keyboard.GetState();
-            var mouse = Mouse.GetState();
-            if (mouse.LeftButton == ButtonState.Pressed)
-            {
-                var mousePos = new Vector2(mouse.X, mouse.Y);
-                var camera = RenderSystem.GetCamera();
-                var worldPos = Vector2.Transform(mousePos, Matrix.Invert(camera.TransformMatrix));
-                Path = Pathfinding.FindPath(Game.instance._currentLevel.TileMap, Position, worldPos);
-            }*/
         }
     }
 }

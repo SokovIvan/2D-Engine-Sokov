@@ -41,22 +41,7 @@ namespace _2D_Engine_Sokov.GameObjects
             }
             else if (Path.Count > 0)
             {
-                //Vector2 dir = Path[0] - Position;
                 LookAt(Path[0]);
-                /*if (dir != Vector2.Zero)
-                {
-                    dir.Normalize();
-                    dir = new Vector2((float)Math.Round(dir.X), (float)Math.Round(dir.Y));
-                    //Console.WriteLine(dir.ToString());
-                    if(dir ==Vector2.UnitX)
-                    SetRotation(0f);
-                    else if (dir == Vector2.UnitY)
-                        SetRotation(90f);
-                    else if (dir == -Vector2.UnitX)
-                        SetRotation(180f);
-                    else if (dir == -Vector2.UnitY)
-                        SetRotation(270f);
-                }*/
             }
 
             if (Target != null && Vector2.Distance(Position, Target.Position) <= AttackRange)

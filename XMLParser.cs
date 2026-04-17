@@ -1,16 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿
 using Microsoft.Xna.Framework;
-using System.Linq;
-
-using System.Reflection.Emit;
-using System.Reflection.Metadata;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Linq;
 using _2D_Engine_Sokov.GameObjects;
 using _2D_Engine_Sokov.UIElements;
-using System.ComponentModel;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace _2D_Engine_Sokov

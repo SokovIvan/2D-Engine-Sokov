@@ -60,16 +60,37 @@ namespace _2D_Engine_Sokov
             var tile = GetTile(x, y);
             return tile != null && tile.IsOccupied;
         }
+
         public void GenerateMapTexture(GraphicsDevice graphicsDevice, Dictionary<string, Texture2D> tileTextures)
         {
-            // Освобождаем предыдущую текстуру
+            using var done = new ManualResetEvent(false);
+
+            // Отправляем генерацию в очередь рендер-потока
+            RenderSystem.ExecuteOnRenderThread(() =>
+            {
+                try
+                {
+                    GenerateMapTextureInternal(graphicsDevice, tileTextures);
+                }
+                finally
+                {
+                    done.Set(); // Сигнализируем, что задача завершена
+                }
+            });
+
+            // Ждём завершения, не блокируя рендер-поток
+            done.WaitOne();
+        }
+
+        // Вся твоя оригинальная логика переехала сюда
+        private void GenerateMapTextureInternal(GraphicsDevice graphicsDevice, Dictionary<string, Texture2D> tileTextures)
+        {
             if (MapTexture != null && !MapTexture.IsDisposed)
             {
                 MapTexture.Dispose();
             }
 
-            // Создаем новую текстуру
-             MapTexture = new Texture2D(graphicsDevice, Width * TileWidth, Height * TileHeight);
+            MapTexture = new Texture2D(graphicsDevice, Width * TileWidth, Height * TileHeight);
             Color[] data = new Color[Width * TileWidth * Height * TileHeight];
 
             for (int y = 0; y < Height; y++)
@@ -80,7 +101,7 @@ namespace _2D_Engine_Sokov
                     if (tile != null && tileTextures.TryGetValue(tile.TextureName, out var texture))
                     {
                         Color[] tileData = new Color[TileWidth * TileHeight];
-                        texture.GetData(tileData);
+                        texture.GetData(tileData); // Теперь безопасно! Мы в RenderThread
                         for (int ty = 0; ty < TileHeight; ty++)
                         {
                             for (int tx = 0; tx < TileWidth; tx++)
@@ -103,9 +124,7 @@ namespace _2D_Engine_Sokov
                 LayerDepth = 0f,
                 IsActive = true
             };
-            //RenderSystem.SubmitBackgrounds(new[] { MapSprite });
         }
-
         public Vector2 GridToWorldPosition(int x, int y)
         {
             return new Vector2(x * TileWidth, y * TileHeight);

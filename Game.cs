@@ -1,15 +1,4 @@
-﻿using _2D_Engine_Sokov.GameObjects;
-using _2D_Engine_Sokov.UIElements;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using TwoMGFX.TPGParser;
+﻿using Microsoft.Xna.Framework.Input;
 
 namespace _2D_Engine_Sokov
 {

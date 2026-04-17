@@ -42,11 +42,7 @@ namespace _2D_Engine_Sokov.UIElements
                 camera.Move(new Microsoft.Xna.Framework.Vector2(1000 * (float)deltaTime, 0)); // Движение вправо                                                
             }
 
-
-
             HandleSelection();
-
-            //base.Update(deltaTime);
         }
         private void HandleSelection() {
             var keyboard = Keyboard.GetState();
@@ -57,14 +53,7 @@ namespace _2D_Engine_Sokov.UIElements
                 var mousePos = new Vector2(mouse.X, mouse.Y);
                 var camera = RenderSystem.GetCamera();
                 var worldPos = Vector2.Transform(mousePos, Matrix.Invert(camera.TransformMatrix));
-                //Vector2[] posUnits = new Vector2[selectedUnits.Count];
-                //for (int i =0;i< selectedUnits.Count; i++)
-                //{
-                //    var unit = selectedUnits[i];
-                //    posUnits[i] = unit.Position;
-                //    unit.Path = Pathfinding.FindPath(Game.instance._currentLevel.TileMap, unit.Position, worldPos+(posUnits[i]- posUnits[0]));
-                //}
-                //Console.WriteLine(worldPos);
+
                 if (placingBuilding) {
                     if (GameController.instance.playerRes >= 10) {
                         GameController.instance.playerRes -= 10;
@@ -106,7 +95,6 @@ namespace _2D_Engine_Sokov.UIElements
                 int width = Math.Abs((int)(lastSelection.X - firstSelection.X));
                 int height = Math.Abs((int)(lastSelection.Y - firstSelection.Y));
                 Rectangle rectangle = new Rectangle(x, y, width, height);
-                    //Rectangle rectangle = new Rectangle(firstSelection.ToPoint(), (lastSelection - firstSelection).ToPoint());
                 RenderSystem.SubmitPersistentCommand(() => {
                     RenderSystem.DrawRectangle(rectangle, Color.Green, 3f);
                 }, framesToLive: 3);
@@ -127,10 +115,6 @@ namespace _2D_Engine_Sokov.UIElements
                             int width = Math.Abs((int)(lastSelection.X - firstSelection.X));
                             int height = Math.Abs((int)(lastSelection.Y - firstSelection.Y));
                             Rectangle rectangle = new Rectangle(x, y, width, height);
-                            //Rectangle rectangle = new Rectangle(firstSelection.ToPoint(), (lastSelection-firstSelection).ToPoint());
-                             //RenderSystem.SubmitPersistentCommand(() => {
-                              //              RenderSystem.DrawRectangle(rectangle, Color.Green, 3f);
-                              //          }, framesToLive: 3);
                             if (rectangle.Contains(player.Position)) { 
                                 selectedUnits.Add(player);
                             }

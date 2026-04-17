@@ -43,6 +43,13 @@ namespace _2D_Engine_Sokov
         // Очередь загрузки текстур
         private static readonly ConcurrentQueue<(Sprite, string)> _textureLoadQueue = new();
         private static readonly ConcurrentQueue<(UIElement, string)> _textureLoadQueueUI = new();
+        // В начало класса RenderSystem, рядом с другими очередями
+        private static readonly ConcurrentQueue<Action> _renderQueue = new();
+
+        public static void ExecuteOnRenderThread(Action action)
+        {
+            if (action != null) _renderQueue.Enqueue(action);
+        }
         // Добавляем камеру
         private static Camera _camera;
 
@@ -325,6 +332,13 @@ namespace _2D_Engine_Sokov
 
             protected override void Update(GameTime gameTime)
             {
+                // Безопасно выполняем все отложенные GPU-задачи
+                while (_renderQueue.TryDequeue(out var action))
+                {
+                    try { action(); }
+                    catch (Exception ex) { Console.WriteLine($"[RenderThread Error] {ex.Message}"); }
+                }
+
                 TextureManager.Update();
                 base.Update(gameTime);
             }

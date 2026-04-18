@@ -87,5 +87,7 @@ namespace _2D_Engine_Sokov.MapGeneration
         toxic = 6,
         resource = 7, 
         emptiness = 8,
+        forest = 9,
+        xeno = 10,
     }
 }

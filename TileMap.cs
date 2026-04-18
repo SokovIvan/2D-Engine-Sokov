@@ -65,7 +65,6 @@ namespace _2D_Engine_Sokov
         {
             using var done = new ManualResetEvent(false);
 
-            // Отправляем генерацию в очередь рендер-потока
             RenderSystem.ExecuteOnRenderThread(() =>
             {
                 try
@@ -74,15 +73,28 @@ namespace _2D_Engine_Sokov
                 }
                 finally
                 {
-                    done.Set(); // Сигнализируем, что задача завершена
+                    done.Set(); 
                 }
             });
 
-            // Ждём завершения, не блокируя рендер-поток
             done.WaitOne();
         }
 
-        // Вся твоя оригинальная логика переехала сюда
+        public bool IsAreaWalkable(int startX, int startY, int widthInTiles, int heightInTiles)
+        {
+            for (int x = startX; x < startX + widthInTiles; x++)
+            {
+                for (int y = startY; y < startY + heightInTiles; y++)
+                {
+                    // Проверка границ карты
+                    if (x < 0 || x >= Width || y < 0 || y >= Height) return false;
+                    // Если хотя бы одна клетка непроходима или занята другим юнитом -> область недоступна
+                    if (!IsWalkable(x, y) || IsOccupied(x, y)) return false;
+                }
+            }
+            return true;
+        }
+
         private void GenerateMapTextureInternal(GraphicsDevice graphicsDevice, Dictionary<string, Texture2D> tileTextures)
         {
             if (MapTexture != null && !MapTexture.IsDisposed)

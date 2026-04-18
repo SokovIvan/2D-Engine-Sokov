@@ -29,7 +29,7 @@ namespace _2D_Engine_Sokov.MapGeneration
             {
                 int x = rand.Next(width);
                 int y = rand.Next(height);
-                int r = avgRadius + rand.Next(-avgRadius, avgRadius);
+                int r = avgRadius + rand.Next(0, avgRadius);
                 int intensity = rand.Next(-avgIntensity, avgIntensity+1);
 
                 int minX = Math.Max(0, (int)(x - r * r));
@@ -42,7 +42,7 @@ namespace _2D_Engine_Sokov.MapGeneration
                     for (int cy = minY; cy < maxY; cy++)
                     {
                         float distSq = (cx - x) * (cx - x) + (cy - y) * (cy - y);
-                        if (distSq < r * r * r)
+                        if (distSq < r * r)
                         {
                             // Гауссово затухание
                             float val = (intensity * MathF.Exp(-distSq / (2 * r * r)));
@@ -69,93 +69,99 @@ namespace _2D_Engine_Sokov.MapGeneration
             }
             return HeightMap;
         }
-        private static MapGroundStates[,] ApplyMapLayers(Random random, int width, int height, MapGroundStates[,] Map, int[,] HeightMap)
+        private static MapGroundStates[,] ApplyMapLayers(Random random, int width, int height, MapGroundStates[,] Map, int[,] HeightMap, int min_height = -5, int max_height = 5)
         {
 
-
-
-            float waterThreshold = -3.0f;   
-            float toxicThreshold = -4.5f;  
-
-            float grassThreshold = 0.0f;    
-            float groundThreshold = 2.0f;   
-
-            float stoneThreshold = 4.0f;   
-            float metalThreshold = 4.5f;    
+            float xenoTh = min_height;
+            float toxicTh = min_height * 0.95f;
+            float waterTh = min_height * 0.7f;
+            float grassTh = min_height * 0.2f;
+            float forestTh = max_height * 0.2f;
+            float groundTh = max_height * 0.6f;
+            float stoneTh = max_height * 0.75f;
+            float metalTh = max_height * 0.9f;
 
             for (int i = 0; i < width; i++)
             {
                 for (int j = 0; j < height; j++)
                 {
-                    float currentHeight = (float)HeightMap[i, j];
-                    MapGroundStates terrainType;
+                    float currentH = (float)HeightMap[i, j];
 
-                    if (currentHeight <= toxicThreshold)
-                    {
-                        terrainType = MapGroundStates.toxic;
-                    }
-                    else if (currentHeight <= waterThreshold)
-                    {
-                        terrainType = MapGroundStates.water;
-                    }
-                    else if (currentHeight <= grassThreshold)
-                    {
-
-                        terrainType = MapGroundStates.grass;
-                    }
-                    else if (currentHeight <= groundThreshold)
-                    {
-                        if (random.Next(0, 100) < 5)
-                            terrainType = MapGroundStates.resource;
-                        else
-                            terrainType = MapGroundStates.ground;
-                    }
-                    else if (currentHeight <= stoneThreshold)
-                    {
-
-                        terrainType = MapGroundStates.stone;
-                    }
-                    else if (currentHeight <= metalThreshold)
-                    {
- 
-                        if (random.Next(0, 10) > 8) 
-                            terrainType = MapGroundStates.metal;
-                        else
-                            terrainType = MapGroundStates.stone;
-                    }
-                    else
-                    {
-
-                        if (currentHeight >= 5.0f)
-                            terrainType = MapGroundStates.emptiness;
-                        else
-                            terrainType = MapGroundStates.stone; 
-                    }
-
-                    Map[i, j] = terrainType;
+                    if (currentH <= xenoTh) Map[i, j] = MapGroundStates.xeno;
+                    else if (currentH <= toxicTh) Map[i, j] = MapGroundStates.toxic;
+                    else if (currentH <= waterTh) Map[i, j] = MapGroundStates.water;
+                    else if (currentH <= grassTh) Map[i, j] = MapGroundStates.grass;
+                    else if (currentH <= forestTh) Map[i, j] = MapGroundStates.forest;
+                    else if (currentH <= groundTh) Map[i, j] = random.Next(100) < 5 ? MapGroundStates.resource : MapGroundStates.ground;
+                    else if (currentH <= stoneTh) Map[i, j] = MapGroundStates.stone;
+                    else if (currentH <= metalTh) Map[i, j] = random.Next(10) > 8 ? MapGroundStates.metal : MapGroundStates.stone;
+                    else Map[i, j] = currentH >= max_height ? MapGroundStates.emptiness : MapGroundStates.stone;
                 }
             }
             return Map;
+        }
+        private static int[,] SmoothHeightMap(int[,] heightMap, int width, int height, int passes = 2)
+        {
+            // Клонирование, чтобы не менять исходный массив случайно
+            int[,] current = (int[,])heightMap.Clone();
+            int[,] buffer = new int[width, height];
+
+            for (int pass = 0; pass < passes; pass++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    for (int y = 0; y < height; y++)
+                    {
+                        int sum = 0;
+                        int count = 0;
+
+                        // Ядро 3x3
+                        for (int dx = -1; dx <= 1; dx++)
+                        {
+                            for (int dy = -1; dy <= 1; dy++)
+                            {
+                                int nx = x + dx;
+                                int ny = y + dy;
+
+                                // Безопасная проверка границ
+                                if (nx >= 0 && nx < width && ny >= 0 && ny < height)
+                                {
+                                    sum += current[nx, ny];
+                                    count++;
+                                }
+                            }
+                        }
+                        buffer[x, y] = sum / count;
+                    }
+                }
+
+                // Быстрая замена ссылок без выделения памяти
+                var temp = current;
+                current = buffer;
+                buffer = temp;
+            }
+            return current;
         }
         public static MapState GenerateMapState(int width = 96, int height = 96, int min_height = -5, int max_height = 5, int hash = 0)
         {
             MapGroundStates[,] Map = new MapGroundStates[width, height];
             int[,] HeightMap = new int[width, height];
             Random random = new Random(hash);
-            int c = 10;
+            int c = 5;
             int rad = width / c;
-            HeightMap = ApplyBlobLayer(random, width, height, HeightMap, count: c, avgIntensity: 10, avgRadius: rad );
-            c = 50;
+            HeightMap = ApplyBlobLayer(random, width, height, HeightMap, count: c, avgIntensity: (max_height - min_height), avgRadius: rad , min_height: min_height, max_height: max_height);
+            c = c*c;
             rad = width / c;
-            HeightMap = ApplyBlobLayer(random, width, height, HeightMap, count: c, avgIntensity: 3, avgRadius: rad  );
-            c = 100;
+            HeightMap = ApplyBlobLayer(random, width, height, HeightMap, count: c, avgIntensity: (max_height - min_height)/3, avgRadius: rad, min_height: min_height, max_height: max_height);
+            c = c*c;
             rad = width / c;
-            HeightMap = ApplyBlobLayer(random, width, height, HeightMap, count: c, avgIntensity: 1, avgRadius: rad );
-            HeightMap = ApplyBlobLayer(random, width, height, HeightMap);
-            Map = ApplyMapLayers(random, width, height, Map, HeightMap);
+            HeightMap = ApplyBlobLayer(random, width, height, HeightMap, count: c, avgIntensity: (max_height - min_height)/6, avgRadius: rad, min_height: min_height, max_height: max_height);
+
+            HeightMap = SmoothHeightMap(HeightMap, width, height, passes: 3);
+
+            Map = ApplyMapLayers(random, width, height, Map, HeightMap, min_height: min_height, max_height: max_height);
 
             string rawDataPath = GenerateRawDataImage(Map, HeightMap);
-
             string visualPath = GenerateVisualMap(Map, HeightMap);
 
             return new MapState(Map, HeightMap, rawDataPath);
@@ -231,12 +237,14 @@ namespace _2D_Engine_Sokov.MapGeneration
             Ground = 0xFF8B4513,   // SaddleBrown
             Stone = 0xFF696969,    // DimGray
             Metal = 0xFF708090,    // SlateGray
-            Grass = 0xFF228B22,    // ForestGreen
+            Grass = 0xFF228B22,    // GrassGreen
             Water = 0xFF1E90FF,    // DeepSkyBlue
             Lava = 0xFFFF4500,     // OrangeRed
             Toxic = 0xFF32CD32,    // LimeGreen
             Resource = 0xFFFFD700, // Gold
-            Emptiness = 0xFF000000 // Black
+            Emptiness = 0xFF000000, // Black
+            Forest = 0xFF11FF11,    // ForestGreen
+            Xeno = 0xFF1FF0FF,    // Xeno
         }
         private static uint GetColorForState(MapGroundStates state)
         {
@@ -250,6 +258,8 @@ namespace _2D_Engine_Sokov.MapGeneration
                 case MapGroundStates.lava: return (uint)MapVisualColors.Lava;
                 case MapGroundStates.toxic: return (uint)MapVisualColors.Toxic;
                 case MapGroundStates.resource: return (uint)MapVisualColors.Resource;
+                case MapGroundStates.forest: return (uint)MapVisualColors.Forest;
+                case MapGroundStates.xeno: return (uint)MapVisualColors.Xeno;
                 case MapGroundStates.emptiness:
                 default: return (uint)MapVisualColors.Emptiness;
             }

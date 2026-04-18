@@ -69,6 +69,15 @@ namespace _2D_Engine_Sokov.MapGeneration
             }
             return HeightMap;
         }
+        private static Color ApplyHeightShading(Color baseColor, float heightNormalized)
+        {
+            // Нижний рельеф чуть темнее, верхний - светлее (диапазон 0.85 - 1.15)
+            float factor = 0.85f + 0.35f * heightNormalized;
+            int r = (int)Math.Max(0, Math.Min(255, baseColor.R * factor));
+            int g = (int)Math.Max(0, Math.Min(255, baseColor.G * factor));
+            int b = (int)Math.Max(0, Math.Min(255, baseColor.B * factor));
+            return Color.FromArgb(baseColor.A, r, g, b);
+        }
         private static MapGroundStates[,] ApplyMapLayers(Random random, int width, int height, MapGroundStates[,] Map, int[,] HeightMap, int min_height = -5, int max_height = 5)
         {
 
@@ -206,6 +215,17 @@ namespace _2D_Engine_Sokov.MapGeneration
             int height = map.GetUpperBound(0) + 1;
             int width = map.GetLength(0);
 
+            // Находим реальные min/max высоты для корректной нормализации
+            int actualMin = int.MaxValue;
+            int actualMax = int.MinValue;
+            foreach (var h in heightmap)
+            {
+                if (h < actualMin) actualMin = h;
+                if (h > actualMax) actualMax = h;
+            }
+            float heightRange = actualMax - actualMin;
+            if (heightRange == 0) heightRange = 1;
+
             using (Bitmap bitmap = new Bitmap(width, height, PixelFormat.Format32bppArgb))
             {
                 for (int y = 0; y < height; y++)
@@ -215,15 +235,33 @@ namespace _2D_Engine_Sokov.MapGeneration
                         MapGroundStates state = map[x, y];
                         uint colorVal = GetColorForState(state);
 
-                        // Преобразуем uint ARGB в Color
-                        Color color = Color.FromArgb(
-                            (int)((colorVal >> 24) & 0xFF), // A
-                            (int)((colorVal >> 16) & 0xFF), // R
-                            (int)((colorVal >> 8) & 0xFF),  // G
-                            (int)(colorVal & 0xFF)          // B
+                        Color baseColor = Color.FromArgb(
+                            (int)((colorVal >> 24) & 0xFF),
+                            (int)((colorVal >> 16) & 0xFF),
+                            (int)((colorVal >> 8) & 0xFF),
+                            (int)(colorVal & 0xFF)
                         );
 
-                        bitmap.SetPixel(x, y, color);
+                        // 1. Плавный шейдинг по высоте
+                        float hNorm = (heightmap[x, y] - actualMin) / heightRange;
+                        Color shadedColor = ApplyHeightShading(baseColor, hNorm);
+
+                        // 2. Изолинии (контуры)
+                        // Контур рисуется каждые 2 единицы высоты (можно менять contourStep)
+                        int contourStep = 5;
+                        bool isContour = ((heightmap[x, y] - actualMin) % contourStep == 0);
+
+                        if (isContour)
+                        {
+                            // Затемняем пиксель, чтобы линия была видна, но не перекрывала базовый цвет
+                            int darken = 25;
+                            int r = Math.Max(0, shadedColor.R - darken);
+                            int g = Math.Max(0, shadedColor.G - darken);
+                            int b = Math.Max(0, shadedColor.B - darken);
+                            shadedColor = Color.FromArgb(shadedColor.A, r, g, b);
+                        }
+
+                        bitmap.SetPixel(x, y, shadedColor);
                     }
                 }
 

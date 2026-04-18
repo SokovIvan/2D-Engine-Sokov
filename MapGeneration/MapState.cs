@@ -14,6 +14,9 @@ namespace _2D_Engine_Sokov.MapGeneration
         private int[,] HeightMap;
         private int width = 0;
         private int height = 0;
+        public int Width => width;
+        public int Height => height;
+
         public string path_to_image;
         public MapState()
         {

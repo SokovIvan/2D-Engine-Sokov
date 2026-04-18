@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using _2D_Engine_Sokov.GameObjects;
+using _2D_Engine_Sokov.MapGeneration;
 
 namespace _2D_Engine_Sokov
 {
@@ -136,6 +137,61 @@ namespace _2D_Engine_Sokov
                 LayerDepth = 0f,
                 IsActive = true
             };
+        }
+
+        /// <summary>
+        /// Создаёт TileMap из MapState, используя готовую PNG-текстуру вместо сборки тайлов.
+        /// </summary>
+        public static TileMap FromMapState(MapState state, int tileWidth, int tileHeight,
+                                           GraphicsDevice graphicsDevice,
+                                           string visualMapPath = null,
+                                           Dictionary<MapGroundStates, bool> walkableRules = null)
+        {
+            int w = state.Width;
+            int h = state.Height;
+            TileMap tileMap = new TileMap(w, h, tileWidth, tileHeight);
+
+            // Настройки проходимости по умолчанию
+            var defaultWalkable = new HashSet<MapGroundStates>
+            {
+                MapGroundStates.ground, MapGroundStates.grass, MapGroundStates.forest,
+                MapGroundStates.stone, MapGroundStates.metal, MapGroundStates.resource
+            };
+
+            // Заполняем логическую сетку
+            for (int x = 0; x < w; x++)
+            {
+                for (int y = 0; y < h; y++)
+                {
+                    MapGroundStates ground = state.getGroundState(x, y);
+                    bool isWalkable = defaultWalkable.Contains(ground);
+
+                    if (walkableRules != null && walkableRules.ContainsKey(ground))
+                        isWalkable = walkableRules[ground];
+
+                    // TextureName теперь не используется для отрисовки, но конструктор требует строку
+                    tileMap.Tiles[x, y] = new Tile(isWalkable, "auto_visual");
+                }
+            }
+
+            // Загружаем готовую PNG текстуру
+            string pathToLoad = visualMapPath ?? state.path_to_image;
+            if (!string.IsNullOrEmpty(pathToLoad) && System.IO.File.Exists(pathToLoad))
+            {
+                using var stream = System.IO.File.OpenRead(pathToLoad);
+                tileMap.MapTexture = Texture2D.FromStream(graphicsDevice, stream);
+                tileMap.MapSprite = new Sprite
+                {
+                    Texture = tileMap.MapTexture,
+                    Position = Vector2.Zero,
+                    Origin = Vector2.Zero,
+                    Scale = Vector2.One,
+                    LayerDepth = 0f,
+                    IsActive = true
+                };
+            }
+
+            return tileMap;
         }
         public Vector2 GridToWorldPosition(int x, int y)
         {

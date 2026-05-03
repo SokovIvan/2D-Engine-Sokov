@@ -4,6 +4,7 @@ using _2D_Engine_Sokov.WarDots.Units;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 
 namespace _2D_Engine_Sokov.WarDots
 {
@@ -12,7 +13,6 @@ namespace _2D_Engine_Sokov.WarDots
         public static int GlobalResources { get; set; } = 150;
         private static int _decisionFrames = 0;
         private static readonly int DecisionIntervalFrames = 90; // ~1.5 сек при 60 FPS логики
-
         public static void Initialize()
         {
             LogicSystem.OnLogicUpdate += Update;
@@ -22,12 +22,12 @@ namespace _2D_Engine_Sokov.WarDots
         private static void Update()
         {
             _decisionFrames++;
-            UpdateUnitsBehavior();
-            UpdateBuildingsLogic();
 
             if (_decisionFrames >= DecisionIntervalFrames)
             {
                 _decisionFrames = 0;
+                UpdateUnitsBehavior();
+                UpdateBuildingsLogic();
                 MakeStrategicDecisions();
             }
         }
@@ -42,7 +42,7 @@ namespace _2D_Engine_Sokov.WarDots
             var players = LogicSystem.FindGameObjectsByTag("Player")
                                      .Where(p => p.IsActive)
                                      .ToList();
-
+            var tileMap = GameContext.TileMap;
             foreach (var div in divisions)
             {
                 if (div.Target == null || !div.Target.IsActive)
@@ -51,11 +51,14 @@ namespace _2D_Engine_Sokov.WarDots
                     if (closest != null)
                     {
                         div.Target = closest;
-                        div.Path = Pathfinding.FindPath(
-                            Game.instance._currentLevel.TileMap,
-                            div.Position,
-                            closest.Position
-                        );
+
+                        // 🔍 Валидация перед запуском поиска
+                        if (tileMap == null)
+                            continue;
+
+                        var targetGridPos = tileMap.WorldToGridPosition(closest.Position);
+                        div.Path = Pathfinding.FindPath(tileMap, div.Position, closest.Position);//, ignoreTile: targetGridPos);
+
                     }
                 }
             }
@@ -80,7 +83,7 @@ namespace _2D_Engine_Sokov.WarDots
 
         private static void MakeStrategicDecisions()
         {
-            var tileMap = Game.instance._currentLevel.TileMap;
+            var tileMap = GameContext.TileMap;
             var bases = LogicSystem.FindGameObjectsByType(typeof(WarDotsEnemyBase)).Where(b => b.IsActive).ToList();
             if (bases.Count == 0) return;
 
@@ -112,29 +115,40 @@ namespace _2D_Engine_Sokov.WarDots
 
         private static void TryPlaceBuilding(Type buildingType, Vector2 targetPos)
         {
-            var tileMap = Game.instance._currentLevel.TileMap;
+            var tileMap = GameContext.TileMap;
+            if (tileMap == null) return;
+
+            // Ограничение по границам карты
             var gridPos = tileMap.WorldToGridPosition(targetPos);
+            int gridX = Math.Clamp(gridPos.X, 1, tileMap.Width - 2);
+            int gridY = Math.Clamp(gridPos.Y, 1, tileMap.Height - 2);
 
-            // Простой поиск свободного тайла в радиусе 3 клеток
-            for (int dx = -3; dx <= 3; dx++)
+            // Поиск свободного тайла рядом
+            for (int dx = -4; dx <= 4; dx++)
             {
-                for (int dy = -3; dy <= 3; dy++)
+                for (int dy = -4; dy <= 4; dy++)
                 {
-                    var checkX = gridPos.X + dx;
-                    var checkY = gridPos.Y + dy;
-                    var tile = tileMap.GetTile(checkX, checkY);
+                    int checkX = gridX + dx;
+                    int checkY = gridY + dy;
 
+                    if (checkX < 0 || checkX >= tileMap.Width || checkY < 0 || checkY >= tileMap.Height)
+                        continue;
+
+                    var tile = tileMap.GetTile(checkX, checkY);
                     if (tile != null && tile.IsWalkable && !tileMap.IsOccupied(checkX, checkY))
                     {
                         var worldPos = tileMap.GridToWorldPosition(checkX, checkY);
                         var building = (WarDotsBuilding)Activator.CreateInstance(buildingType);
                         building.Position = worldPos;
-                        Game.SubmitObject(building);
-                        Console.WriteLine($"[AI] Построено: {buildingType.Name}");
+                        building.Tag = "Enemy";
+                        WarDotsGame.SubmitObject(building);
+
+                        Console.WriteLine($"[AI] Построено: {buildingType.Name} на ({checkX},{checkY})");
                         return;
                     }
                 }
             }
+            Console.WriteLine($"[AI] Не удалось найти место для {buildingType.Name}");
         }
     }
 }

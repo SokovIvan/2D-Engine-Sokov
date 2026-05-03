@@ -70,7 +70,7 @@ namespace _2D_Engine_Sokov
         public static void DisposeUIElement(UIElement uIElement)
         {
             if (instance._UIElements.Contains(uIElement)) {
-                UISystem.UnregisterUIElement(uIElement);
+                //UISystem.UnregisterUIElement(uIElement);
                 instance._UIElements.Remove(uIElement);
                 RenderSystem.RemoveUIElement(uIElement);
             }
@@ -113,7 +113,7 @@ namespace _2D_Engine_Sokov
         }
         private void LogicUpdate()
         {
-            LogicSystem.SubmitGameObjects(_gameObjects.Where(s => s.IsActive).ToArray());
+         //   LogicSystem.SubmitGameObjects(_gameObjects.Where(s => s.IsActive).ToArray());
         }
         private void UIUpdate()
         {
@@ -132,10 +132,10 @@ namespace _2D_Engine_Sokov
             UISystem.Pause();
             Thread.Sleep(50);
             // Полная очистка всех систем
-            LogicSystem.ClearAllBuffers();
+           // LogicSystem.ClearAllBuffers();
             PhysicsSystem.ClearAllBuffers();
             RenderSystem.ClearAllBuffers();
-            UISystem.ClearAllUIElements();
+            //UISystem.ClearAllUIElements();
             Thread.Sleep(50);
             // Очистка внутренних списков
             lock (_gameObjects) // Важно: защищаем список игры
@@ -158,6 +158,7 @@ namespace _2D_Engine_Sokov
             // Загрузка нового уровня
             var newLevel = parser.LoadLevel(path);
             _currentLevel = newLevel;
+            GameContext.SetLevel(newLevel); 
 
             // Добавление новых объектов с проверкой на null
             foreach (var obj in newLevel.gameObjects.Where(obj => obj != null))

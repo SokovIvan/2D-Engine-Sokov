@@ -26,13 +26,15 @@ namespace _2D_Engine_Sokov.WarDots.Units
         {
             base.Start();
             // Отключаем стандартную текстуру, чтобы RenderSystem не пытался её рисовать
-            Texture = null;
+            //Texture = null;
         }
 
         public override void Update(double deltaTime)
         {
+
             base.Update(deltaTime);
-            DrawHeightDependent();
+
+            //DrawHeightDependent();
         }
 
         private void DrawHeightDependent()
@@ -46,9 +48,10 @@ namespace _2D_Engine_Sokov.WarDots.Units
             // RenderSystem использует ConcurrentQueue, поэтому вызов из потока логики безопасен
             if (Altitude <= AltitudeFullDetail)
             {
+                RenderSystem.SubmitPersistentCommand(() => RenderSystem.FillCircle(Position, Radius, mainColor, 32), framesToLive: 5);
+                RenderSystem.SubmitPersistentCommand(() => RenderSystem.DrawCircle(Position, Radius, Color.Black, 32, 2f), framesToLive: 5);
                 // Полная детализация: заполненный круг + чёрная обводка
-                RenderSystem.FillCircle(Position, Radius, mainColor, 32);
-                RenderSystem.DrawCircle(Position, Radius, Color.Black, 32, 2f);
+
             }
             else
             {

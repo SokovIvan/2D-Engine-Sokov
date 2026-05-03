@@ -24,7 +24,7 @@ namespace _2D_Engine_Sokov.UIElements
         {
             base.Update(deltaTime);
 
-            if (UISystem.FindUIElementsByType(typeof(Animation)).Length == 0) educ_anim_completed = true;
+            if (GameContext.GetUIElements().OfType<Animation>().ToArray().Length == 0) educ_anim_completed = true;
             else educ_anim_completed = false;
   
 
@@ -32,7 +32,7 @@ namespace _2D_Engine_Sokov.UIElements
                 timer += deltaTime;
                 if (timer > 5) {
                     NameLevel = Game.instance._currentLevel.Name;
-                    if (UISystem.FindUIElementsByType(typeof(Animation)).Length == 0 && educ_anim_completed)
+                    if (GameContext.GetUIElements().OfType<Animation>().ToArray().Length == 0 && educ_anim_completed)
                     {
                         checkTimes += 1;
                         if (!load && checkTimes > 10)

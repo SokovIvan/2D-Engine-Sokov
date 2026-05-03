@@ -59,7 +59,7 @@ namespace _2D_Engine_Sokov.GameObjects
                     Game.instance._currentLevel.TileMap.DeoccupyTile(target.Position);
 
                     target.IsActive = false;
-                    LogicSystem.RemoveGameObject(target);
+                   // LogicSystem.RemoveGameObject(target);
                 }
             }
             else

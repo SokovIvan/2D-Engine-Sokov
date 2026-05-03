@@ -77,7 +77,7 @@ namespace _2D_Engine_Sokov.WarDots.Units
                     unit.Tag = Tag; // Наследуем фракцию (Player/Enemy)
 
                     OnBeforeUnitSpawned(unit);
-                    Game.SubmitObject(unit);
+                    WarDotsGame.SubmitObject(unit);
                 }
 
                 _productionQueue.Dequeue();

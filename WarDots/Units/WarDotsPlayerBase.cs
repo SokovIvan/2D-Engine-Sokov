@@ -6,16 +6,15 @@ using System.Threading.Tasks;
 
 namespace _2D_Engine_Sokov.WarDots.Units
 {
-    public class WarDotsEnemyBase : WarDotsBuilding
+    public class WarDotsPlayerBase : WarDotsBuilding
     {
-        public bool IsDefeated { get; private set; }
+        public bool IsDestroyed { get; private set; }
 
-        public WarDotsEnemyBase()
-        {
-            Tag = "Enemy";
-            Health = 600f;
+        public WarDotsPlayerBase() {
+            Tag = "Player";
+            Health = 650f;
             ProduceUnit = null;
-            string texturePath = "Content/Textures/enbuild.png";
+            string texturePath = "Content/Textures/plbuild.png";
             RenderSystem.EnqueueTextureLoad(this, texturePath);
         }
 
@@ -28,19 +27,19 @@ namespace _2D_Engine_Sokov.WarDots.Units
         public override void Update(double deltaTime)
         {
             base.Update(deltaTime);
-            if (Health <= 0 && !IsDefeated)
+            if (Health <= 0 && !IsDestroyed)
             {
-                IsDefeated = true;
-                TriggerDefeatSequence();
+                IsDestroyed = true;
+                TriggerDefeat();
             }
         }
 
-        private void TriggerDefeatSequence()
+        private void TriggerDefeat()
         {
-            Console.WriteLine("[AI] БАЗА ПРОТИВНИКА РАЗРУШЕНА. ПОБЕДА.");
+            Console.WriteLine("[GAME] БАЗА ИГРОКА УНИЧТОЖЕНА. ПОРАЖЕНИЕ.");
             LogicSystem.Pause();
             PhysicsSystem.Pause();
-            // Здесь можно добавить загрузку экрана победы через Game.instance.LoadLevel("Victory.xml");
+            // Здесь можно вызвать WarDotsGame.ShowDefeatScreen();
         }
 
         protected override bool HasResources(Type unitType) => true;

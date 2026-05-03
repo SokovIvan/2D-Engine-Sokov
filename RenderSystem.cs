@@ -72,7 +72,14 @@ namespace _2D_Engine_Sokov
         private static readonly List<PersistentDrawCommand> _persistentCommandsOffCamera = new();
         private static readonly List<PersistentDrawCommand> _persistentCommands = new();
         private static readonly object _persistentCommandsLock = new();
-
+        public static void PrepareNextFrame()
+        {
+            lock (_bufferLock)
+            {
+                _nextFrameList.Clear();
+                _uiElements.Clear(); // UI тоже готовится заново каждый кадр
+            }
+        }
         // Новый метод для добавления "долгоживущих" команд
         public static void SubmitPersistentCommand(Action command, int framesToLive,bool useCamera = true)
         {
@@ -215,7 +222,7 @@ namespace _2D_Engine_Sokov
                     Vector2.Zero,
                     new Vector2(length, thickness),
                     SpriteEffects.None,
-                    0f);
+                    0.5f);
             });
         }
 
@@ -332,6 +339,7 @@ namespace _2D_Engine_Sokov
 
             protected override void Update(GameTime gameTime)
             {
+
                 // Безопасно выполняем все отложенные GPU-задачи
                 while (_renderQueue.TryDequeue(out var action))
                 {
@@ -364,18 +372,20 @@ namespace _2D_Engine_Sokov
                     var temp = _currentRenderList;
                     _currentRenderList = _nextFrameList;
                     _nextFrameList = temp;
+
                 }
 
                 _graphicsDevice.Clear(backgroundColor);
+                _spriteBatch.Begin(
+                    SpriteSortMode.Deferred,          // Сортировка отключена, порядок = порядку вызовов
+                    BlendState.AlphaBlend,
+                    SamplerState.PointClamp,
+                    null, null, null,
+                    _camera?.TransformMatrix          // Матрица камеры применяется один раз
+                );
 
                 if (_backgrounds.Count > 0)
                 {
-                    _spriteBatch.Begin(
-                        sortMode: SpriteSortMode.FrontToBack,
-                        blendState: BlendState.AlphaBlend,
-                        samplerState: SamplerState.PointClamp
-                    );
-
                     foreach (var element in _backgrounds.OrderBy(e => e.LayerDepth))
                     {
                         if (element.Texture == null || !element.IsActive) continue;
@@ -389,17 +399,10 @@ namespace _2D_Engine_Sokov
                             origin: element.Origin,
                             scale: element.Scale,
                             effects: element.Effects,
-                            layerDepth: element.LayerDepth
+                            layerDepth: 0f
                         );
                     }
-                    _spriteBatch.End();
                 }
-
-                _spriteBatch.Begin(
-                    sortMode: SpriteSortMode.FrontToBack,
-                    blendState: BlendState.AlphaBlend,
-                    transformMatrix: _camera?.TransformMatrix
-                );
 
                 foreach (var sprite in renderList.OrderBy(s => s.LayerDepth))
                 {
@@ -423,30 +426,26 @@ namespace _2D_Engine_Sokov
                         layerDepth: sprite.LayerDepth
                     );
                 }
-                
-                while (_drawCommands.TryDequeue(out var command))
-                {
-                    command.Invoke();
-                }
+
+                // 🔑 ИЗМЕНЕНИЕ 1: Сначала обрабатываем persistent-команды
                 lock (_persistentCommandsLock)
                 {
                     for (int i = _persistentCommands.Count - 1; i >= 0; i--)
                     {
                         var cmd = _persistentCommands[i];
-                        cmd.Command.Invoke();
+                        cmd.Command.Invoke(); // Если здесь вызывается DrawLine, он добавит в _drawCommands
                         cmd.FramesLeft--;
-
                         if (cmd.FramesLeft <= 0)
                             _persistentCommands.RemoveAt(i);
                     }
                 }
-                _spriteBatch.End();
 
-                    _spriteBatch.Begin(
-                        sortMode: SpriteSortMode.FrontToBack,
-                        blendState: BlendState.AlphaBlend,
-                        samplerState: SamplerState.PointClamp
-                    );
+                // 🔑 ИЗМЕНЕНИЕ 2: Теперь обрабатываем _drawCommands. 
+                // Если persistent-команда добавила сюда что-то, это отрисуется в ЭТОМ ЖЕ кадре, без моргания.
+                while (_drawCommands.TryDequeue(out var command))
+                {
+                    command.Invoke();
+                }
                 if (uiList.Count > 0)
                 {
 
@@ -469,10 +468,6 @@ namespace _2D_Engine_Sokov
                     }
  
                 }
-                while (_drawCommandsOffCamera.TryDequeue(out var command))
-                {
-                    command.Invoke();
-                }
                 lock (_persistentCommandsLock)
                 {
                     for (int i = _persistentCommandsOffCamera.Count - 1; i >= 0; i--)
@@ -480,10 +475,13 @@ namespace _2D_Engine_Sokov
                         var cmd = _persistentCommandsOffCamera[i];
                         cmd.Command.Invoke();
                         cmd.FramesLeft--;
-
                         if (cmd.FramesLeft <= 0)
                             _persistentCommandsOffCamera.RemoveAt(i);
                     }
+                }
+                while (_drawCommandsOffCamera.TryDequeue(out var command))
+                {
+                    command.Invoke();
                 }
                 _spriteBatch.End();
                 base.Draw(gameTime);
@@ -580,7 +578,7 @@ namespace _2D_Engine_Sokov
         public static void DrawStaticText(SpriteFont font, string text, Vector2 position, Color color, float scale = 1f)
         {
             _drawCommands.Enqueue(() => {
-                _spriteBatch.DrawString(font, text, position, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+                _spriteBatch.DrawString(font, text, position, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 1f);
             });
         }
 

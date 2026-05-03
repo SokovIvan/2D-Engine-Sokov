@@ -81,16 +81,21 @@ namespace _2D_Engine_Sokov
             done.WaitOne();
         }
 
-        public bool IsAreaWalkable(int startX, int startY, int widthInTiles, int heightInTiles)
+        public bool IsAreaWalkable(int startX, int startY, int widthInTiles, int heightInTiles, Point? ignoreTile = null)
         {
-            for (int x = startX; x < startX + widthInTiles; x++)
+            int endX = startX + widthInTiles;
+            int endY = startY + heightInTiles;
+
+            for (int x = startX; x < endX; x++)
             {
-                for (int y = startY; y < startY + heightInTiles; y++)
+                if (x < 0 || x >= Width) return false;
+                for (int y = startY; y < endY; y++)
                 {
-                    // Проверка границ карты
-                    if (x < 0 || x >= Width || y < 0 || y >= Height) return false;
-                    // Если хотя бы одна клетка непроходима или занята другим юнитом -> область недоступна
-                    if (!IsWalkable(x, y) || IsOccupied(x, y)) return false;
+                    if (y < 0 || y >= Height) return false;
+                    if (ignoreTile.HasValue && x == ignoreTile.Value.X && y == ignoreTile.Value.Y) continue;
+
+                    var tile = Tiles[x, y];
+                    if (tile == null || !tile.IsWalkable || tile.IsOccupied) return false;
                 }
             }
             return true;

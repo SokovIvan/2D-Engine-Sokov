@@ -11,12 +11,17 @@ namespace _2D_Engine_Sokov.WarDots.Units
         public float GenerationRate { get; set; } = 10f; // Ресурсов в секунду
         private float _generationTimer;
 
-        public override void Start()
-        {
-            base.Start();
+        public WarDotsEnemyResourceGenerator(){
             Tag = "Enemy";
             Health = 150f;
             ProduceUnit = null; // Отключаем производство юнитов
+            string texturePath = "Content/Textures/enbuild_resgen.png";
+            RenderSystem.EnqueueTextureLoad(this, texturePath);
+        }
+        public override void Start()
+        {
+            base.Start();
+
         }
 
         public override void Update(double deltaTime)

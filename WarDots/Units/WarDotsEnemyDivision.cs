@@ -19,6 +19,9 @@ namespace _2D_Engine_Sokov.WarDots.Units
             Radius = 10f;
             AltitudeFullDetail = 40f;
             AltitudeHidden = 120f;
+            string texturePath = "Content/Textures/enemy.png";
+            RenderSystem.EnqueueTextureLoad(this, texturePath);
+           // RenderSystem.SubmitSprite(this);
         }
 
         public override void Start()

@@ -29,8 +29,11 @@ namespace _2D_Engine_Sokov.MapGeneration
             path_to_image= path;
             if (map != null) {
                 Map = (MapGroundStates[,]?)map.Clone();
-                height = Map.GetUpperBound(0) + 1;
-                width = Map.Length / height;
+                if (Map != null)
+                {
+                    width = Map.GetLength(0);   // Первый индекс [x, ...]
+                    height = Map.GetLength(1);  // Второй индекс [..., y]
+                }
             }
             if (heightmap != null)
                 HeightMap = (int[,]?)heightmap.Clone();

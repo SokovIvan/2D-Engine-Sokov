@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 using System.Text;
 using System.Threading.Tasks;
 using _2D_Engine_Sokov.GameObjects;
+using _2D_Engine_Sokov.WarDots.Units;
 
 namespace _2D_Engine_Sokov.UIElements
 {
@@ -44,7 +45,7 @@ namespace _2D_Engine_Sokov.UIElements
             }
 
 
-            if (UISystem.FindUIElementsByType(typeof(Animation)).Length == 0) educ_anim_completed = true;
+            if (GameContext.GetUIElements().OfType<Animation>().ToArray().Length == 0) educ_anim_completed = true;
             else educ_anim_completed = false;
 
             if (educ_anim_completed && educ_movement_completed && !educ_enemy_spawned) {

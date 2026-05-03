@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
+
 namespace _2D_Engine_Sokov.GameObjects
 {
     public abstract class Unit : Sprite
@@ -20,48 +19,79 @@ namespace _2D_Engine_Sokov.GameObjects
         protected float StopCooldown { get; set; } = 1f;
         protected Tile OccupiedTile { get; set; }
         protected Point OccupiedTilePosition { get; set; }
+
+        private bool _isMapReady = false;
+
+        private float _detectTimer = 0f;
+
+        private Point _lastGridPos = Point.Zero;
+
         public override void Start()
         {
+            _detectTimer = (float)Random.Shared.NextDouble();
             base.Start();
-            Game.instance._currentLevel.TileMap.OccupyTile(Position);
-            var pt = Game.instance._currentLevel.TileMap.WorldToGridPosition(Position);
-            OccupiedTile = Game.instance._currentLevel.TileMap.GetTile(pt.X, pt.Y);
-            OccupiedTilePosition = pt;
-            SetOriginToCenter();
+            _isMapReady = false;
         }
+
+        // Замени Update() на этот вариант:
         public override void Update(double deltaTime)
         {
-            base.Update(deltaTime);
-            CooldownTimer -= (float)deltaTime;
-
-
-            if (Target != null)
+            if (!_isMapReady)
             {
-                LookAt(Target);
+                var tileMap = GameContext.TileMap;
+                if (tileMap == null) return;
+                tileMap.OccupyTile(Position);
+                var pt = tileMap.WorldToGridPosition(Position);
+                OccupiedTile = tileMap.GetTile(pt.X, pt.Y);
+                OccupiedTilePosition = pt;
+                _lastGridPos = pt;
+                SetOriginToCenter();
+                _isMapReady = true;
+                return;
             }
-            else if (Path.Count > 0)
+
+            base.Update(deltaTime);
+
+            CooldownTimer -= (float)deltaTime;
+            StopCooldown += (float)deltaTime;
+            _detectTimer += (float)deltaTime;
+
+            if (_detectTimer >= 0.5f)
             {
+                _detectTimer = 0f;
+                DetectUnits();
+            }
+
+            // === ИЗМЕНЁННАЯ ЛОГИКА ПОВОРОТА ===
+            if (Path.Count > 0)
+            {
+                // Если есть путь — смотрим по направлению движения
                 LookAt(Path[0]);
             }
-
-            if (Target != null && Vector2.Distance(Position, Target.Position) <= AttackRange)
+            else if (Target != null)
             {
-                if(Target.GetType().IsSubclassOf(typeof(Unit)))
-                Attack((Unit)Target);
+                // Если пути нет, но есть цель — смотрим на цель
+                // (обычно это происходит, когда юнит дошёл и атакует)
+                LookAt(Target);
+            }
+
+            // Атака
+            if (Target != null && Vector2.DistanceSquared(Position, Target.Position) <= AttackRange * AttackRange)
+            {
+                if (Target.GetType().IsSubclassOf(typeof(Unit)))
+                    Attack((Unit)Target);
                 else if (Target.GetType().IsSubclassOf(typeof(Building)))
                     Attack((Building)Target);
             }
             else if (Path.Count > 0)
-            {                
+            {
                 MoveAlongPath((float)deltaTime);
             }
-
-            DetectUnits();
         }
 
         protected void DetectUnits()
         {
-            var units = LogicSystem.FindGameObjectsByTag(this is PlayerUnit ? "Enemy" : "Player");
+            var units = LogicSystem.FindGameObjectsByTag(Tag=="Player" ? "Enemy" : "Player");
             Sprite closest = null;
             float closestDistance = float.MaxValue;
 
@@ -81,93 +111,86 @@ namespace _2D_Engine_Sokov.GameObjects
             {
                 if (MoveSpeed > 0)
                     if (StopCooldown > 100 / MoveSpeed)
-                    { 
-                        Path = Pathfinding.FindPath(Game.instance._currentLevel.TileMap, Position, Target.Position);
+                    {
+                        var ignore = GameContext.TileMap.WorldToGridPosition(Position);
+                        Path = Pathfinding.FindPath(GameContext.TileMap, Position, Target.Position, 1, 1);//, ignore);
                         StopCooldown = 0;
                     }
-                
             }
         }
 
         protected void Attack(Unit target)
         {
             if (CooldownTimer <= 0)
-            {                
-                RenderSystem.SubmitPersistentCommand(() => {
-                    RenderSystem.DrawLine(Position, target.Position , Color.Red, 2f);
-                }, framesToLive: 3);
+            {
+                RenderSystem.SubmitPersistentCommand(() => RenderSystem.DrawLine(Position, target.Position, Color.Red, 2f), framesToLive: 3);
                 target.Health -= AttackDamage;
                 CooldownTimer = AttackCooldown;
                 if (target.Health <= 0)
                 {
-                    Game.instance._currentLevel.TileMap.DeoccupyTile(target.Position);
-                    Game.instance._currentLevel.TileMap.DeoccupyTile(Game.instance._currentLevel.TileMap.GridToWorldPosition(target.OccupiedTilePosition.X, target.OccupiedTilePosition.Y));
-
+                    var tm = GameContext.TileMap;
+                    tm?.DeoccupyTile(target.Position);
+                    tm?.DeoccupyTile(tm.GridToWorldPosition(target.OccupiedTilePosition.X, target.OccupiedTilePosition.Y));
                     target.IsActive = false;
-                    LogicSystem.RemoveGameObject(target);
+                    //LogicSystem.RemoveGameObject(target);
                 }
             }
-            else RenderSystem.SubmitPersistentCommand(() => {
-                RenderSystem.DrawLine(Position , target.Position  , Color.Gray, 1f);
-            }, framesToLive: 2);
+            else
+            {
+                RenderSystem.SubmitPersistentCommand(() => RenderSystem.DrawLine(Position, target.Position, Color.Gray, 1f), framesToLive: 2);
+            }
         }
+
         protected void Attack(Building target)
         {
             if (CooldownTimer <= 0)
             {
-                RenderSystem.SubmitPersistentCommand(() => {
-                    RenderSystem.DrawLine(Position, target.Position, Color.Red, 2f);
-                }, framesToLive: 3);
+                RenderSystem.SubmitPersistentCommand(() => RenderSystem.DrawLine(Position, target.Position, Color.Red, 2f), framesToLive: 3);
                 target.Health -= AttackDamage;
                 CooldownTimer = AttackCooldown;
                 if (target.Health <= 0)
                 {
-                    Game.instance._currentLevel.TileMap.DeoccupyTile(target.Position);
-                    Game.instance._currentLevel.TileMap.DeoccupyTile(Game.instance._currentLevel.TileMap.GridToWorldPosition(target.OccupiedTilePosition.X, target.OccupiedTilePosition.Y));
-
+                    var tm = GameContext.TileMap;
+                    tm?.DeoccupyTile(target.Position);
+                    tm?.DeoccupyTile(tm.GridToWorldPosition(target.OccupiedTilePosition.X, target.OccupiedTilePosition.Y));
                     target.IsActive = false;
-                    LogicSystem.RemoveGameObject(target);
+                  //  LogicSystem.RemoveGameObject(target);
                 }
             }
-            else RenderSystem.SubmitPersistentCommand(() => {
-                RenderSystem.DrawLine(Position, target.Position, Color.Gray, 1f);
-            }, framesToLive: 2);
+            else
+            {
+                RenderSystem.SubmitPersistentCommand(() => RenderSystem.DrawLine(Position, target.Position, Color.Gray, 1f), framesToLive: 2);
+            }
         }
+
         protected void MoveAlongPath(float deltaTime)
         {
             if (Path.Count == 0) return;
-
             var targetPos = Path[0];
-            Point targetTile = Game.instance._currentLevel.TileMap.WorldToGridPosition(targetPos);
-            
-                if (!Game.instance._currentLevel.TileMap.IsOccupied(targetTile.X, targetTile.Y))
+            var tm = GameContext.TileMap;
+            if (tm == null) return;
+
+            var direction = Vector2.Normalize(targetPos - Position);
+            var distance = Vector2.Distance(Position, targetPos);
+
+            // Плавное движение к цели
+            Position += direction * MoveSpeed * (float)deltaTime;
+
+            // Если дошли до точки пути, фиксируем позицию и убираем её из списка
+            if (distance < MoveSpeed * (float)deltaTime + 1f)
+            {
+                Position = targetPos;
+                Path.RemoveAt(0);
+
+                // 🛡️ Обновляем занятость тайла только при смене клетки
+                var newGridPos = tm.WorldToGridPosition(Position);
+                if (newGridPos != OccupiedTilePosition)
                 {
-                    Game.instance._currentLevel.TileMap.DeoccupyTile(Game.instance._currentLevel.TileMap.GridToWorldPosition(OccupiedTilePosition.X, OccupiedTilePosition.Y));
-                    OccupiedTile = Game.instance._currentLevel.TileMap.GetTile(targetTile.X, targetTile.Y);
-                    OccupiedTilePosition = targetTile;
-                    Game.instance._currentLevel.TileMap.DeoccupyTile(Position);
-                    Game.instance._currentLevel.TileMap.OccupyTile(targetPos);
-
+                    tm.DeoccupyTile(tm.GridToWorldPosition(OccupiedTilePosition.X, OccupiedTilePosition.Y));
+                    OccupiedTilePosition = newGridPos;
+                    tm.OccupyTile(Position);
                 }
-                
-                var direction = Vector2.Normalize(targetPos - Position);
-                var distance = Vector2.Distance(Position, targetPos);
-
-                if (distance < 2 * MoveSpeed * deltaTime)
-                {
-                    Position = targetPos;
-                    Game.instance._currentLevel.TileMap.OccupyTile(Position);
-                    Path.RemoveAt(0);
-                }
-                else
-                {
-                    Position += direction * MoveSpeed * (float)(deltaTime+Random.Shared.NextDouble()* deltaTime);
-                }
-
-            
-
-            
-
+            }
         }
     }
 }

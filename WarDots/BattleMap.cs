@@ -31,7 +31,8 @@ namespace _2D_Engine_Sokov
             var defaultWalkable = new HashSet<MapGroundStates>
             {
                 MapGroundStates.ground, MapGroundStates.grass, MapGroundStates.forest,
-                MapGroundStates.stone, MapGroundStates.metal, MapGroundStates.resource
+                MapGroundStates.stone, MapGroundStates.metal, MapGroundStates.resource, 
+                MapGroundStates.toxic,
             };
 
             for (int x = 0; x < MapState.Width; x++)
@@ -73,7 +74,8 @@ namespace _2D_Engine_Sokov
             {
                 try
                 {
-                    using var stream = System.IO.File.OpenRead(pathToLoad);
+                    string visualPath = state.path_to_image.Replace("_data", "_visual");
+                    using var stream = System.IO.File.OpenRead(visualPath);
                     battleMap.MapSprite = new Sprite
                     {
                         Texture = Texture2D.FromStream(graphicsDevice, stream),
@@ -83,6 +85,13 @@ namespace _2D_Engine_Sokov
                         LayerDepth = 0f,
                         IsActive = true
                     };
+                    if (battleMap.MapSprite != null)
+                    {
+                        battleMap.MapSprite.Scale = new Vector2(
+                            (float)tileWidth / battleMap.MapSprite.Texture.Width * battleMap.Width,
+                            (float)tileHeight / battleMap.MapSprite.Texture.Height * battleMap.Height
+                        );
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -120,13 +129,16 @@ namespace _2D_Engine_Sokov
         public void UpdateBoundary()
         {
             _boundaryPoints.Clear();
-            if (_playerUnits.Count == 0 || _enemyUnits.Count == 0) return;
+            if (_playerUnits.Count == 0 || _enemyUnits.Count == 0)
+                return;
 
-            // Для каждой Y-строки находим X, где влияние игрока и противника максимально близко
+            var rawPoints = new List<Vector2>();
+
+            // 1. Собираем "сырые" точки равновесия
             for (int y = 0; y < Height; y++)
             {
                 float bestDiff = float.MaxValue;
-                int bestX = 0;
+                int bestX = Width / 2;
 
                 for (int x = 0; x < Width; x++)
                 {
@@ -140,7 +152,56 @@ namespace _2D_Engine_Sokov
                         bestX = x;
                     }
                 }
-                _boundaryPoints.Add(GridToWorldPosition(bestX, y));
+                rawPoints.Add(GridToWorldPosition(bestX, y));
+            }
+
+            // 2. Сглаживаем линию (простое скользящее среднее)
+            const int smoothingWindow = 5; // можно менять от 3 до 7
+            var smoothedPoints = new List<Vector2>();
+
+            for (int i = 0; i < rawPoints.Count; i++)
+            {
+                float sumX = 0f;
+                int count = 0;
+
+                for (int j = -smoothingWindow / 2; j <= smoothingWindow / 2; j++)
+                {
+                    int idx = i + j;
+                    if (idx >= 0 && idx < rawPoints.Count)
+                    {
+                        sumX += rawPoints[idx].X;
+                        count++;
+                    }
+                }
+
+                float smoothedX = sumX / count;
+                float yPos = rawPoints[i].Y;
+
+                smoothedPoints.Add(new Vector2(smoothedX, yPos));
+            }
+
+            // 3. Убираем резкие скачки (максимальный шаг по X)
+            float maxStepX = 2.5f * TileWidth; // не даём прыгать больше чем на 2.5 клетки
+
+            _boundaryPoints.Add(smoothedPoints[0]);
+
+            for (int i = 1; i < smoothedPoints.Count; i++)
+            {
+                Vector2 prev = _boundaryPoints[^1];
+                Vector2 curr = smoothedPoints[i];
+
+                float dx = curr.X - prev.X;
+
+                // Ограничиваем горизонтальный скачок
+                if (Math.Abs(dx) > maxStepX)
+                {
+                    float limitedX = prev.X + Math.Sign(dx) * maxStepX;
+                    _boundaryPoints.Add(new Vector2(limitedX, curr.Y));
+                }
+                else
+                {
+                    _boundaryPoints.Add(curr);
+                }
             }
         }
 

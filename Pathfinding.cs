@@ -13,127 +13,153 @@ namespace _2D_Engine_Sokov
             public float HCost { get; set; }
             public float FCost => GCost + HCost;
             public Node Parent { get; set; }
+            public int OpenedVersion { get; set; } = 0; // для оптимизации без очистки списков
         }
 
-        /// <summary>
-        /// Находит путь с учётом размера юнита в клетках.
-        /// unitTileWidth/Height = количество клеток, которые занимает юнит по ширине/высоте.
-        /// </summary>
-        public static List<Vector2> FindPath(TileMap tileMap, Vector2 start, Vector2 end, int unitTileWidth = 1, int unitTileHeight = 1)
-        {
-            var startPoint = tileMap.WorldToGridPosition(start);
-            var endPoint = tileMap.WorldToGridPosition(end);
+        private static int _version = 0;
 
-            // Если стартовая позиция уже блокирована размером юнита, путь невозможен
-            if (!tileMap.IsAreaWalkable(startPoint.X, startPoint.Y, unitTileWidth, unitTileHeight))
+        /// <summary>
+        /// Находит путь с учётом размера юнита в тайлах.
+        /// Поддерживает юнитов больше 1x1 клетки.
+        /// При недостижимой цели возвращает путь к ближайшей достижимой позиции.
+        /// </summary>
+        public static List<Vector2> FindPath(TileMap tileMap, Vector2 startWorld, Vector2 endWorld,
+                                           int unitTileWidth = 1, int unitTileHeight = 1)
+        {
+            if (tileMap == null) return new List<Vector2>();
+
+            var startPoint = tileMap.WorldToGridPosition(startWorld);
+            var endPoint = tileMap.WorldToGridPosition(endWorld);
+
+            // Игнорируем текущую позицию юнита при проверках проходимости
+            var ignoreTile = startPoint;
+
+            // Проверяем, может ли юнит вообще стоять на стартовой позиции
+            if (!tileMap.IsAreaWalkable(startPoint.X, startPoint.Y, unitTileWidth, unitTileHeight, ignoreTile))
                 return new List<Vector2>();
+
+            _version++;
+
+            var openList = new PriorityQueue<Node, float>();
+            var cameFrom = new Dictionary<Point, Node>();
+            var gScore = new Dictionary<Point, float>();
 
             var startNode = new Node
             {
                 Position = startPoint,
                 GCost = 0,
-                HCost = Heuristic(startPoint, endPoint)
+                HCost = Heuristic(startPoint, endPoint),
+                OpenedVersion = _version
             };
 
-            var openList = new List<Node> { startNode };
-            var closedList = new HashSet<Point>();
+            openList.Enqueue(startNode, startNode.FCost);
+            cameFrom[startPoint] = startNode;
+            gScore[startPoint] = 0;
+
             Node closestNode = startNode;
+            float closestH = startNode.HCost;
 
             while (openList.Count > 0)
             {
-                // Выбираем узел с наименьшим FCost
-                var current = openList[0];
-                int currentIndex = 0;
-                for (int i = 1; i < openList.Count; i++)
-                {
-                    if (openList[i].FCost < current.FCost || (openList[i].FCost == current.FCost && openList[i].HCost < current.HCost))
-                    {
-                        current = openList[i];
-                        currentIndex = i;
-                    }
-                }
+                var current = openList.Dequeue();
 
-                if (current.HCost < closestNode.HCost)
-                    closestNode = current;
-
-                openList.RemoveAt(currentIndex);
-                closedList.Add(current.Position);
-
-                // Проверяем, достигли ли цели (цель попадает в прямоугольник юнита)
+                // Если мы достаточно близко к цели (цель попадает в тело юнита)
                 if (IsTargetReached(current.Position, endPoint, unitTileWidth, unitTileHeight))
                 {
                     return ReconstructPath(tileMap, current);
                 }
 
-                // Перебираем соседей (4 направления)
+                if (current.HCost < closestH)
+                {
+                    closestNode = current;
+                    closestH = current.HCost;
+                }
+
                 foreach (var neighbor in GetNeighbors(tileMap, current.Position))
                 {
-                    if (closedList.Contains(neighbor)) continue;
+                    if (!tileMap.IsAreaWalkable(neighbor.X, neighbor.Y, unitTileWidth, unitTileHeight, ignoreTile))
+                        continue;
 
-                    // ГЛАВНОЕ: проверяем, помещается ли весь юнит в соседнюю позицию
-                    if (!tileMap.IsAreaWalkable(neighbor.X, neighbor.Y, unitTileWidth, unitTileHeight)) continue;
+                    float tentativeGCost = current.GCost +
+                        Vector2.DistanceSquared(
+                            tileMap.GridToWorldPosition(current.Position.X, current.Position.Y),
+                            tileMap.GridToWorldPosition(neighbor.X, neighbor.Y));
 
-                    float tentativeGCost = current.GCost + Vector2.Distance(
-                        tileMap.GridToWorldPosition(current.Position.X, current.Position.Y),
-                        tileMap.GridToWorldPosition(neighbor.X, neighbor.Y));
-
-                    var neighborNode = new Node
+                    if (!gScore.TryGetValue(neighbor, out float currentGCost) || tentativeGCost < currentGCost)
                     {
-                        Position = neighbor,
-                        GCost = tentativeGCost,
-                        HCost = Heuristic(neighbor, endPoint)
-                    };
+                        var neighborNode = new Node
+                        {
+                            Position = neighbor,
+                            GCost = tentativeGCost,
+                            HCost = Heuristic(neighbor, endPoint),
+                            Parent = current,
+                            OpenedVersion = _version
+                        };
 
-                    if (neighborNode.HCost < closestNode.HCost)
-                        closestNode = neighborNode;
+                        gScore[neighbor] = tentativeGCost;
+                        cameFrom[neighbor] = neighborNode;
 
-                    var existingNode = openList.Find(n => n.Position == neighbor);
-                    if (existingNode == null)
-                    {
-                        openList.Add(neighborNode);
-                        neighborNode.Parent = current;
-                    }
-                    else if (tentativeGCost < existingNode.GCost)
-                    {
-                        existingNode.GCost = tentativeGCost;
-                        existingNode.Parent = current;
+                        if (neighborNode.HCost < closestH)
+                        {
+                            closestNode = neighborNode;
+                            closestH = neighborNode.HCost;
+                        }
+
+                        openList.Enqueue(neighborNode, neighborNode.FCost);
                     }
                 }
             }
 
-            // Если путь до цели не найден, возвращаем ближайшую допустимую точку
+            // Если точная цель недостижима — идём к ближайшей достижимой точке
             return ReconstructPath(tileMap, closestNode);
         }
 
-        private static bool IsTargetReached(Point current, Point target, int unitW, int unitH)
+        private static bool IsTargetReached(Point unitTopLeft, Point target, int unitW, int unitH)
         {
-            // Цель достигнута, если целевая клетка находится внутри прямоугольника юнита
-            return current.X <= target.X && target.X < current.X + unitW &&
-                   current.Y <= target.Y && target.Y < current.Y + unitH;
+            return target.X >= unitTopLeft.X && target.X < unitTopLeft.X + unitW &&
+                   target.Y >= unitTopLeft.Y && target.Y < unitTopLeft.Y + unitH;
         }
 
-        private static float Heuristic(Point a, Point b) => Math.Abs(a.X - b.X) + Math.Abs(a.Y - b.Y);
-
-        private static List<Point> GetNeighbors(TileMap tileMap, Point position)
+        private static float Heuristic(Point a, Point b)
         {
-            return new List<Point>
+            // Манхэттен + небольшая поправка для диагоналей (лучше для 4-направленного поиска)
+            int dx = Math.Abs(a.X - b.X);
+            int dy = Math.Abs(a.Y - b.Y);
+            return dx + dy + 0.001f * Math.Min(dx, dy);
+        }
+
+        private static List<Point> GetNeighbors(TileMap tileMap, Point pos)
+        {
+            var neighbors = new List<Point>(4);
+
+            // Можно добавить диагонали позже, если нужно (сейчас только 4 направления)
+            var directions = new[]
             {
-                new Point(position.X + 1, position.Y),
-                new Point(position.X - 1, position.Y),
-                new Point(position.X, position.Y + 1),
-                new Point(position.X, position.Y - 1)
-            }.FindAll(p => p.X >= 0 && p.X < tileMap.Width && p.Y >= 0 && p.Y < tileMap.Height);
+                new Point(1, 0), new Point(-1, 0),
+                new Point(0, 1), new Point(0, -1)
+            };
+
+            foreach (var dir in directions)
+            {
+                Point n = new Point(pos.X + dir.X, pos.Y + dir.Y);
+                if (n.X >= 0 && n.X < tileMap.Width && n.Y >= 0 && n.Y < tileMap.Height)
+                    neighbors.Add(n);
+            }
+
+            return neighbors;
         }
 
         private static List<Vector2> ReconstructPath(TileMap tileMap, Node current)
         {
             var path = new List<Vector2>();
+
             while (current != null)
             {
-                // Возвращаем мировую позицию верхнего левого угла узла
+                // Возвращаем мировую позицию верхнего-левого угла занимаемой области юнита
                 path.Add(tileMap.GridToWorldPosition(current.Position.X, current.Position.Y));
                 current = current.Parent;
             }
+
             path.Reverse();
             return path;
         }

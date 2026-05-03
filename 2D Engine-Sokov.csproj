@@ -51,6 +51,9 @@
     <None Update="Content\Levels\Scene_0.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\Levels\WarDots\Level_Test.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\Music\Echoes of the Void ext v1.mp3">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -121,6 +124,7 @@
 
   <ItemGroup>
     <Folder Include="Content\Maps\" />
+    <Folder Include="WarDots\UI\" />
   </ItemGroup>
 
 </Project>

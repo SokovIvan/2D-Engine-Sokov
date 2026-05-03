@@ -4,6 +4,8 @@ using System.Xml.Linq;
 using _2D_Engine_Sokov.GameObjects;
 using _2D_Engine_Sokov.UIElements;
 using Microsoft.Xna.Framework.Graphics;
+using _2D_Engine_Sokov.WarDots.Units;
+using _2D_Engine_Sokov.MapGeneration;
 
 namespace _2D_Engine_Sokov
 {
@@ -49,6 +51,7 @@ namespace _2D_Engine_Sokov
                 foreach (var spriteEl in bgElement.Elements("Sprite"))
                 {
                     Sprite bg = ParseSprite(spriteEl);
+
                     if (bg != null) level.backgrounds.Add(bg);
                 }
             }
@@ -57,36 +60,55 @@ namespace _2D_Engine_Sokov
             return level;
         }
 
-        private TileMap ParseTileMap(XElement tileMapElement)
+        private TileMap ParseTileMap(XElement mapElement)
         {
-            if (tileMapElement == null) return null;
+            if (mapElement == null) return null;
 
-            int width = int.Parse(tileMapElement.Attribute("Width")?.Value ?? "10");
-            int height = int.Parse(tileMapElement.Attribute("Height")?.Value ?? "10");
-            int tileWidth = int.Parse(tileMapElement.Attribute("TileWidth")?.Value ?? "32");
-            int tileHeight = int.Parse(tileMapElement.Attribute("TileHeight")?.Value ?? "32");
+            int width = int.Parse(mapElement.Attribute("Width")?.Value ?? "64");
+            int height = int.Parse(mapElement.Attribute("Height")?.Value ?? "64");
+            int tileW = int.Parse(mapElement.Attribute("TileWidth")?.Value ?? "32");
+            int tileH = int.Parse(mapElement.Attribute("TileHeight")?.Value ?? "32");
+            bool autoGenerate = bool.Parse(mapElement.Attribute("AutoGenerate")?.Value ?? "false");
+            int hash = int.Parse(mapElement.Attribute("Hash")?.Value ?? "0");
+            int minH = int.Parse(mapElement.Attribute("MinHeight")?.Value ?? "-5");
+            int maxH = int.Parse(mapElement.Attribute("MaxHeight")?.Value ?? "5");
 
-            var tileMap = new TileMap(width, height, tileWidth, tileHeight);
-            var tileTextures = new Dictionary<string, Texture2D>();
-
-            foreach (var tileElement in tileMapElement.Elements("Tile"))
+            if (autoGenerate)
             {
-                int x = int.Parse(tileElement.Attribute("X")?.Value ?? "0");
-                int y = int.Parse(tileElement.Attribute("Y")?.Value ?? "0");
-                bool isWalkable = bool.Parse(tileElement.Attribute("IsWalkable")?.Value ?? "true");
-                string textureName = tileElement.Attribute("Texture")?.Value;
+                // Безопасное ожидание инициализации GPU
+                while (RenderSystem._graphicsDevice == null) Thread.Sleep(10);
 
-                if (!string.IsNullOrEmpty(textureName) && !tileTextures.ContainsKey(textureName))
-                {
-                    using var stream = System.IO.File.OpenRead(textureName);
-                    tileTextures[textureName] = Texture2D.FromStream(RenderSystem._graphicsDevice, stream);
-                }
-
-                tileMap.SetTile(x, y, new Tile(isWalkable, textureName));
+                Console.WriteLine($"[Parser] Генерация BattleMap: {width}x{height} (Hash: {hash})");
+                var mapState = MapGenerator.GenerateMapState(width, height, minH, maxH, hash);
+                return BattleMap.FromMapState(mapState, tileW, tileH, RenderSystem._graphicsDevice);
             }
 
-            tileMap.GenerateMapTexture(RenderSystem._graphicsDevice, tileTextures);
-            return tileMap;
+            // Fallback: ручная расстановка тайлов (совместимость со старыми уровнями)
+            var manualMap = new BattleMap(width, height, tileW, tileH, new MapState());
+            var tileTextures = new Dictionary<string, Texture2D>();
+
+            foreach (var tileEl in mapElement.Elements("Tile"))
+            {
+                int x = int.Parse(tileEl.Attribute("X")?.Value ?? "0");
+                int y = int.Parse(tileEl.Attribute("Y")?.Value ?? "0");
+                bool walkable = bool.Parse(tileEl.Attribute("IsWalkable")?.Value ?? "true");
+                string tex = tileEl.Attribute("Texture")?.Value;
+
+                if (!string.IsNullOrEmpty(tex) && !tileTextures.ContainsKey(tex))
+                {
+                    try
+                    {
+                        using var stream = File.OpenRead(tex);
+                        tileTextures[tex] = Texture2D.FromStream(RenderSystem._graphicsDevice, stream);
+                    }
+                    catch { /* Игнорируем битые ссылки */ }
+                }
+
+                manualMap.SetTile(x, y, new Tile(walkable, tex));
+            }
+
+            manualMap.GenerateMapTexture(RenderSystem._graphicsDevice, tileTextures);
+            return manualMap;
         }
 
         private Color? ParseColor(string colorStr)
@@ -121,10 +143,27 @@ namespace _2D_Engine_Sokov
             bool isActive = bool.Parse(element.Attribute("IsActive")?.Value ?? "true");
             float rotation = float.Parse(element.Attribute("Rotation")?.Value ?? "0");
 
-            GameObject gameObject;
+            GameObject gameObject = null;
 
             switch (typeName)
             {
+                case "WarDotsPlayerDivision":
+                    gameObject = new WarDotsPlayerDivision();
+                    break;
+                case "WarDotsEnemyDivision":
+                    gameObject = new WarDotsEnemyDivision();
+                    break;
+                case "WarDotsPlayerFactory":
+                case "WarDotsEnemyFactory":
+                case "WarDotsPlayerBase":
+                case "WarDotsEnemyBase":
+                case "WarDotsPlayerResourceGenerator":
+                case "WarDotsEnemyResourceGenerator":
+                    var buildType = Type.GetType($"_2D_Engine_Sokov.WarDots.Units.{typeName}");
+                    if (buildType != null)
+                        gameObject = (GameObject)Activator.CreateInstance(buildType);
+                    break;
+
                 case "PlayerUnit":
                     gameObject = new PlayerUnit();
                     break;
@@ -179,7 +218,20 @@ namespace _2D_Engine_Sokov
             //    var child = ParseGameObject(compElement);
             //    gameObject.AddChild(child);
             //}
-
+            // Специфичная логика для WarDotsBuilding: очередь производства из XML
+            if (gameObject is WarDotsBuilding wb)
+            {
+                string produceType = element.Attribute("ProduceType")?.Value;
+                if (!string.IsNullOrEmpty(produceType))
+                {
+                    var unitType = Type.GetType($"_2D_Engine_Sokov.GameObjects.{produceType}");
+                    if (unitType != null && unitType.IsSubclassOf(typeof(WarDotsDivision)))
+                    {
+                        // Безопасно ставим первый юнит в очередь (проверит ресурсы при старте)
+                        wb.EnqueueProduction(unitType);
+                    }
+                }
+            }
             foreach (var compElement in element.Elements("Component"))
             {
                 ParseComponent(gameObject, compElement);

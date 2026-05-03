@@ -11,14 +11,19 @@ namespace _2D_Engine_Sokov.WarDots.Units
     {
         public int FactoryCost { get; set; } = 100;
         public int UnitProductionCost { get; set; } = 25;
-
-        public override void Start()
+        public WarDotsEnemyFactory()
         {
-            base.Start();
             Tag = "Enemy";
             Health = 300f;
             ProducingTime = 7f;
             MaxQueueSize = 4;
+            string texturePath = "Content/Textures/enbuild.png";
+            RenderSystem.EnqueueTextureLoad(this, texturePath);
+
+        }
+        public override void Start()
+        {
+            base.Start();
         }
 
         protected override bool HasResources(Type unitType)

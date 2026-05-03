@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using _2D_Engine_Sokov.UIElements;
 using Microsoft.Xna.Framework;
+
 namespace _2D_Engine_Sokov.GameObjects
 {
     public class Building : Sprite
@@ -26,18 +25,32 @@ namespace _2D_Engine_Sokov.GameObjects
         public Unit ProduceUnit;
         public Vector2 ProduceOffset = Vector2.UnitY;
         protected Vector2 placedPostion;
+
+        private bool _isMapReady = false;
+
         public override void Start()
         {
             base.Start();
-            Game.instance._currentLevel.TileMap.OccupyTile(Position);
-            var pt = Game.instance._currentLevel.TileMap.WorldToGridPosition(Position);
-            OccupiedTile = Game.instance._currentLevel.TileMap.GetTile(pt.X, pt.Y);
-            OccupiedTilePosition = pt;
-            SetOriginToCenter();
-            placedPostion = Position;
+            _isMapReady = false; // Инициализация карты будет выполнена в первом Update
         }
+
         public override void Update(double deltaTime)
         {
+            // 🛡️ Защита от race condition: ждём, пока карта точно загрузится
+            if (!_isMapReady)
+            {
+                var tileMap = GameContext.TileMap;
+                if (tileMap == null) return; // Карта ещё не готова, пропускаем кадр
+
+                tileMap.OccupyTile(Position);
+                var pt = tileMap.WorldToGridPosition(Position);
+                OccupiedTile = tileMap.GetTile(pt.X, pt.Y);
+                OccupiedTilePosition = pt;
+                SetOriginToCenter();
+                placedPostion = Position;
+                _isMapReady = true;
+            }
+
             base.Update(deltaTime);
             CooldownTimer -= (float)deltaTime;
             ProduceTimer += (float)deltaTime;
@@ -46,14 +59,15 @@ namespace _2D_Engine_Sokov.GameObjects
             DetectUnits();
         }
 
-        protected void ProduceUnits()
-        { 
-            if(ProduceUnit==null)                         
-                return;
-            if (ProduceTimer > ProducingTime) {
-                if ((Tag == "Enemy" && GameController.instance.enemyRes > 0)|| (Tag == "Player" && GameController.instance.playerRes > 0))
+        protected virtual void ProduceUnits()
+        {
+            if (ProduceUnit == null) return;
+            if (ProduceTimer > ProducingTime)
+            {
+                if ((Tag == "Enemy" && GameController.instance.enemyRes > 0) ||
+                    (Tag == "Player" && GameController.instance.playerRes > 0))
                 {
-                    if(Tag == "Enemy") GameController.instance.enemyRes -= 1;
+                    if (Tag == "Enemy") GameController.instance.enemyRes -= 1;
                     if (Tag == "Player") GameController.instance.playerRes -= 1;
                     ProduceTimer = 0f;
                     Type t = ProduceUnit.GetType();
@@ -69,11 +83,9 @@ namespace _2D_Engine_Sokov.GameObjects
                         Game.SubmitObject(unit);
                     }
                 }
-
             }
-                
         }
-           
+
         protected void DetectUnits()
         {
             var units = LogicSystem.FindGameObjectsByTag(this is PlayerUnit ? "Enemy" : "Player");
@@ -97,10 +109,9 @@ namespace _2D_Engine_Sokov.GameObjects
                 if (MoveSpeed > 0)
                     if (StopCooldown > 100 / MoveSpeed)
                     {
-                        Path = Pathfinding.FindPath(Game.instance._currentLevel.TileMap, Position, Target.Position);
+                        Path = Pathfinding.FindPath(GameContext.TileMap, Position, Target.Position);
                         StopCooldown = 0;
                     }
-
             }
         }
     }

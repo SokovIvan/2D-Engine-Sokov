@@ -117,13 +117,13 @@ namespace _2D_Engine_Sokov
 
         public UIElement()
         {
-            UISystem.RegisterUIElement(this);
+            //UISystem.RegisterUIElement(this);
         }
 
         ~UIElement()
         {
             Game.DisposeUIElement(this);
-            UISystem.UnregisterUIElement(this);
+           // UISystem.UnregisterUIElement(this);
             if (!string.IsNullOrEmpty(_texturePath))
             {
                 TextureManager.ReleaseTexture(_texturePath);

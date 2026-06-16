@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Level Name="LevelIntermedia_1" BackgroundColor="100,149,237" Gravity="500">
+
+	<UIElement Type="Animation" TextColor ="0,0,0" Size="1280,720" TextOffset="0,0" Rate="10" Position="0,0"  Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true">
+		<Component Text="Добро пожаловать, командующий! Я ,ваш ИИ-агент советник, введу вас в курс дела."
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="125,125,125"
+		FontSize="24" />
+		<Component Text="К сожалению во время вашего вынужденного криосна произошло много событий, однако времени вдаваться в подробности нет.
+				   Враги захватили большую часть страны, большая часть армии уничтожена, однако с помощью клон-пехоты нам удается стабилизировать обстановку.
+				   Вы должны возглавить оставшиеся без командования дивизии и отбить ближнюю местность.
+				   "
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="175,125,125"
+		FontSize="24" />
+		<Component Text="В вашем распоряжении будут пехотные дивизии. Они примерно равны по мощности с дивизиями противника. Выстройте на карте линию фронта с опомщью них."
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="200,125,125"
+		FontSize="24"/>
+		<Component Text="Также вам будут доступны генераторы ресурсов и пехотные заводы, производящие клон-пехоту. Вызывайте их с помощью кнопок на вашем ПТК - персональной тактической консоли."
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="225,125,125"
+		FontSize="24"/>
+		<Component Text="ПТК должен быть вам знаком, однаком ещё раз напомним вам основы. Для выбора дивизий используйте мышь, зажимайте левую кнопку мыши для выделения дивизий рамкой и правую - для указания места сбора."
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="250,125,125"
+		FontSize="24"/>
+		<Component Text="Враг уже появился в секторе. Удачи, командующий!"
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="250,125,125"
+		FontSize="24"/>
+	</UIElement>
+	<UIElement Type="WarDotsIntermediaController" NextLevel="Content/Levels/WarDots/Level_1.xml" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
+
+</Level>

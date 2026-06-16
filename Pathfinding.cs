@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace _2D_Engine_Sokov
 {
-    public class Pathfinding
+    public static class Pathfinding
     {
         private class Node
         {
@@ -13,15 +15,24 @@ namespace _2D_Engine_Sokov
             public float HCost { get; set; }
             public float FCost => GCost + HCost;
             public Node Parent { get; set; }
-            public int OpenedVersion { get; set; } = 0; // для оптимизации без очистки списков
+            public int OpenedVersion { get; set; } = 0;
         }
 
+        // 🔒 Делаем версию потокобезопасной для параллельных вызовов
         private static int _version = 0;
 
         /// <summary>
-        /// Находит путь с учётом размера юнита в тайлах.
-        /// Поддерживает юнитов больше 1x1 клетки.
-        /// При недостижимой цели возвращает путь к ближайшей достижимой позиции.
+        /// Асинхронная версия поиска пути. Выполняется в пуле потоков.
+        /// </summary>
+        public static async Task<List<Vector2>> FindPathAsync(TileMap tileMap, Vector2 startWorld, Vector2 endWorld,
+                                                              int unitTileWidth = 1, int unitTileHeight = 1,
+                                                              CancellationToken cancellationToken = default)
+        {
+            return await Task.Run(() => FindPath(tileMap, startWorld, endWorld, unitTileWidth, unitTileHeight), cancellationToken);
+        }
+
+        /// <summary>
+        /// Оригинальная синхронная версия (оставлена для совместимости).
         /// </summary>
         public static List<Vector2> FindPath(TileMap tileMap, Vector2 startWorld, Vector2 endWorld,
                                            int unitTileWidth = 1, int unitTileHeight = 1)
@@ -30,15 +41,13 @@ namespace _2D_Engine_Sokov
 
             var startPoint = tileMap.WorldToGridPosition(startWorld);
             var endPoint = tileMap.WorldToGridPosition(endWorld);
-
-            // Игнорируем текущую позицию юнита при проверках проходимости
             var ignoreTile = startPoint;
 
-            // Проверяем, может ли юнит вообще стоять на стартовой позиции
             if (!tileMap.IsAreaWalkable(startPoint.X, startPoint.Y, unitTileWidth, unitTileHeight, ignoreTile))
                 return new List<Vector2>();
 
-            _version++;
+            // 🔒 Потокобезопасное инкрементирование версии
+            int currentVersion = Interlocked.Increment(ref _version);
 
             var openList = new PriorityQueue<Node, float>();
             var cameFrom = new Dictionary<Point, Node>();
@@ -49,7 +58,7 @@ namespace _2D_Engine_Sokov
                 Position = startPoint,
                 GCost = 0,
                 HCost = Heuristic(startPoint, endPoint),
-                OpenedVersion = _version
+                OpenedVersion = currentVersion
             };
 
             openList.Enqueue(startNode, startNode.FCost);
@@ -63,11 +72,8 @@ namespace _2D_Engine_Sokov
             {
                 var current = openList.Dequeue();
 
-                // Если мы достаточно близко к цели (цель попадает в тело юнита)
                 if (IsTargetReached(current.Position, endPoint, unitTileWidth, unitTileHeight))
-                {
                     return ReconstructPath(tileMap, current);
-                }
 
                 if (current.HCost < closestH)
                 {
@@ -93,7 +99,7 @@ namespace _2D_Engine_Sokov
                             GCost = tentativeGCost,
                             HCost = Heuristic(neighbor, endPoint),
                             Parent = current,
-                            OpenedVersion = _version
+                            OpenedVersion = currentVersion
                         };
 
                         gScore[neighbor] = tentativeGCost;
@@ -110,19 +116,15 @@ namespace _2D_Engine_Sokov
                 }
             }
 
-            // Если точная цель недостижима — идём к ближайшей достижимой точке
             return ReconstructPath(tileMap, closestNode);
         }
 
-        private static bool IsTargetReached(Point unitTopLeft, Point target, int unitW, int unitH)
-        {
-            return target.X >= unitTopLeft.X && target.X < unitTopLeft.X + unitW &&
-                   target.Y >= unitTopLeft.Y && target.Y < unitTopLeft.Y + unitH;
-        }
+        private static bool IsTargetReached(Point unitTopLeft, Point target, int unitW, int unitH) =>
+            target.X >= unitTopLeft.X && target.X < unitTopLeft.X + unitW &&
+            target.Y >= unitTopLeft.Y && target.Y < unitTopLeft.Y + unitH;
 
         private static float Heuristic(Point a, Point b)
         {
-            // Манхэттен + небольшая поправка для диагоналей (лучше для 4-направленного поиска)
             int dx = Math.Abs(a.X - b.X);
             int dy = Math.Abs(a.Y - b.Y);
             return dx + dy + 0.001f * Math.Min(dx, dy);
@@ -131,13 +133,7 @@ namespace _2D_Engine_Sokov
         private static List<Point> GetNeighbors(TileMap tileMap, Point pos)
         {
             var neighbors = new List<Point>(4);
-
-            // Можно добавить диагонали позже, если нужно (сейчас только 4 направления)
-            var directions = new[]
-            {
-                new Point(1, 0), new Point(-1, 0),
-                new Point(0, 1), new Point(0, -1)
-            };
+            var directions = new[] { new Point(1, 0), new Point(-1, 0), new Point(0, 1), new Point(0, -1) };
 
             foreach (var dir in directions)
             {
@@ -145,21 +141,17 @@ namespace _2D_Engine_Sokov
                 if (n.X >= 0 && n.X < tileMap.Width && n.Y >= 0 && n.Y < tileMap.Height)
                     neighbors.Add(n);
             }
-
             return neighbors;
         }
 
         private static List<Vector2> ReconstructPath(TileMap tileMap, Node current)
         {
             var path = new List<Vector2>();
-
             while (current != null)
             {
-                // Возвращаем мировую позицию верхнего-левого угла занимаемой области юнита
                 path.Add(tileMap.GridToWorldPosition(current.Position.X, current.Position.Y));
                 current = current.Parent;
             }
-
             path.Reverse();
             return path;
         }

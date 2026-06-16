@@ -1,7 +1,5 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
-using System.Collections.Generic;
 using Microsoft.Xna.Framework;
-using _2D_Engine_Sokov.GameObjects;
 using _2D_Engine_Sokov.MapGeneration;
 
 namespace _2D_Engine_Sokov
@@ -12,6 +10,13 @@ namespace _2D_Engine_Sokov
         public int TileHeight { get; private set; }
         public int Width { get; private set; }
         public int Height { get; private set; }
+
+        public int Hash { get; set; }
+
+        public int MaxHeight { get; set; }
+
+        public int MinHeight { get; set; }
+
         private Tile[,] Tiles;
         private Texture2D MapTexture;
         public Sprite MapSprite;
@@ -200,7 +205,7 @@ namespace _2D_Engine_Sokov
         }
         public Vector2 GridToWorldPosition(int x, int y)
         {
-            return new Vector2(x * TileWidth, y * TileHeight);
+            return new Vector2(x * TileWidth + TileWidth / 2f, y * TileHeight + TileHeight / 2f);
         }
 
         public bool OccupyTile(Vector2 worldPos)

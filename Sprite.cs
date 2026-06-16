@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System.Threading;
-using Assimp.Unmanaged;
 
 
 namespace _2D_Engine_Sokov
@@ -22,7 +15,7 @@ namespace _2D_Engine_Sokov
         {
             if (Texture != null)
             {
-                Origin = new Vector2(Texture.Width / 2, Texture.Height / 2);
+                Origin = new Vector2(Texture.Width / 2f, Texture.Height / 2f);
             }
         }
         public Texture2D Texture
@@ -30,12 +23,9 @@ namespace _2D_Engine_Sokov
             get => _texture;
             set
             {
-
                 _texture = value;
                 if (_texture != null)
                 {
-
-                    // Если текстура загружена, применяем отложенный размер (если он есть)
                     if (_pendingSize.HasValue)
                     {
                         Size = _pendingSize.Value;
@@ -44,14 +34,17 @@ namespace _2D_Engine_Sokov
                     }
                     else
                     {
-                        // Иначе используем оригинальный размер текстуры
                         _size = new Vector2(_texture.Width, _texture.Height);
                         UpdateScaleFromSize();
                     }
+                    // 🔪 АВТОМАТИЧЕСКИ ЦЕНТРИРУЕМ ПРИ ЗАГРУЗКЕ
+                    SetOriginToCenter();
                 }
             }
         }
-
+        public string TexturePath { 
+            get => _texturePath;
+        }
         public Color Color { get; set; } = Color.White;
         public Rectangle? SourceRectangle { get; set; } = null;
         public SpriteEffects Effects { get; set; } = SpriteEffects.None;
@@ -63,7 +56,6 @@ namespace _2D_Engine_Sokov
             {
                 if (_texture == null)
                 {
-                    // Если текстура ещё не загружена, сохраняем желаемый размер
                     _pendingSize = value;
                     return;
                 }
@@ -72,6 +64,8 @@ namespace _2D_Engine_Sokov
                 {
                     _size = value;
                     UpdateScaleFromSize();
+                    // ОБНОВЛЯЕМ ЦЕНТР ПРИ ИЗМЕНЕНИИ РАЗМЕРА
+                    SetOriginToCenter();
                 }
             }
         }

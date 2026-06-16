@@ -7,13 +7,20 @@ namespace _2D_Engine_Sokov.GameObjects
 {
     public abstract class Unit : Sprite
     {
+        public float MaxHealth { get; set; }
         public float Health { get; set; } = 100f;
+        public float NormalAttackDamage { get; set; }
         public float AttackDamage { get; set; } = 10f;
+        public float NormalAttackRange{ get; set; }
         public float AttackRange { get; set; } = 100f;
+        public float NormalDetectionRange { get; set; }
         public float DetectionRange { get; set; } = 200f;
+        public float NormalMoveSpeed { get; set; }
         public float MoveSpeed { get; set; } = 100f;
         public List<Vector2> Path { get; set; } = new List<Vector2>();
         public GameObject Target { get; set; }
+
+        public float NormalAttackCooldown { get; set; }
         protected float AttackCooldown { get; set; } = 1f;
         protected float CooldownTimer { get; set; }
         protected float StopCooldown { get; set; } = 1f;
@@ -26,13 +33,22 @@ namespace _2D_Engine_Sokov.GameObjects
 
         private Point _lastGridPos = Point.Zero;
 
+        public Task<List<Vector2>> PathTask { get; set; }
         public override void Start()
         {
             _detectTimer = (float)Random.Shared.NextDouble();
             base.Start();
             _isMapReady = false;
-        }
 
+        }
+        public void stabiliseNormalParameteres() {
+            NormalAttackCooldown = AttackCooldown;
+            NormalAttackDamage = AttackDamage;
+            NormalAttackRange = AttackRange;
+            NormalDetectionRange = DetectionRange;
+            NormalMoveSpeed = MoveSpeed;
+            MaxHealth = Health;
+        } 
         // Замени Update() на этот вариант:
         public override void Update(double deltaTime)
         {
@@ -40,9 +56,14 @@ namespace _2D_Engine_Sokov.GameObjects
             {
                 var tileMap = GameContext.TileMap;
                 if (tileMap == null) return;
+
+                // 🔥 Выравниваем позицию по центру тайла сразу при спавне/загрузке
+                var grid = tileMap.WorldToGridPosition(Position);
+                Position = tileMap.GridToWorldPosition(grid.X, grid.Y);
+
                 tileMap.OccupyTile(Position);
                 var pt = tileMap.WorldToGridPosition(Position);
-                OccupiedTile = tileMap.GetTile(pt.X, pt.Y);
+                OccupiedTile = tileMap.GetTile(pt.X, pt.Y); // Убрала лишний пробел из исходника
                 OccupiedTilePosition = pt;
                 _lastGridPos = pt;
                 SetOriginToCenter();
@@ -50,7 +71,20 @@ namespace _2D_Engine_Sokov.GameObjects
                 return;
             }
 
-            base.Update(deltaTime);
+            // 🔍 Проверяем, завершился ли асинхронный поиск пути
+            if (PathTask != null)
+            {
+                if (PathTask.IsCompletedSuccessfully)
+                {
+                    Path = PathTask.Result; // Результат уже готов, просто присваиваем ссылку
+                    PathTask = null; // Очищаем задачу
+                }
+                else if (PathTask.IsFaulted || PathTask.IsCanceled)
+                {
+                    // Ошибка или отмена — просто игнорируем, чтобы не сломать игру
+                    PathTask = null;
+                }
+            }
 
             CooldownTimer -= (float)deltaTime;
             StopCooldown += (float)deltaTime;
@@ -82,6 +116,7 @@ namespace _2D_Engine_Sokov.GameObjects
                     Attack((Unit)Target);
                 else if (Target.GetType().IsSubclassOf(typeof(Building)))
                     Attack((Building)Target);
+                LookAt(Target);
             }
             else if (Path.Count > 0)
             {
@@ -113,7 +148,7 @@ namespace _2D_Engine_Sokov.GameObjects
                     if (StopCooldown > 100 / MoveSpeed)
                     {
                         var ignore = GameContext.TileMap.WorldToGridPosition(Position);
-                        Path = Pathfinding.FindPath(GameContext.TileMap, Position, Target.Position, 1, 1);//, ignore);
+                        PathTask = Pathfinding.FindPathAsync(GameContext.TileMap, Position, Target.Position);
                         StopCooldown = 0;
                     }
             }
@@ -129,7 +164,6 @@ namespace _2D_Engine_Sokov.GameObjects
                 if (target.Health <= 0)
                 {
                     var tm = GameContext.TileMap;
-                    tm?.DeoccupyTile(target.Position);
                     tm?.DeoccupyTile(tm.GridToWorldPosition(target.OccupiedTilePosition.X, target.OccupiedTilePosition.Y));
                     target.IsActive = false;
                     //LogicSystem.RemoveGameObject(target);
@@ -179,7 +213,11 @@ namespace _2D_Engine_Sokov.GameObjects
             // Если дошли до точки пути, фиксируем позицию и убираем её из списка
             if (distance < MoveSpeed * (float)deltaTime + 1f)
             {
-                Position = targetPos;
+                var randomOffset = new Vector2(
+                (float)(Random.Shared.NextDouble() - 0.5) * 2f,
+                (float)(Random.Shared.NextDouble() - 0.5) * 2f
+                );
+                Position = targetPos + randomOffset;
                 Path.RemoveAt(0);
 
                 // 🛡️ Обновляем занятость тайла только при смене клетки

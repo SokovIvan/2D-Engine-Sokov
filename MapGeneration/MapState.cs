@@ -47,6 +47,7 @@ namespace _2D_Engine_Sokov.MapGeneration
                 return MapGroundStates.emptiness;
             }
         }
+
         public int getHeight(int x, int y)
         {
             try

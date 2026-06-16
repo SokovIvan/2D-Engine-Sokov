@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Level Name="LevelIntermedia_2" BackgroundColor="100,149,237" Gravity="500">
+
+	<UIElement Type="Animation" TextColor ="0,0,0" Size="1280,720" TextOffset="0,0" Rate="10" Position="0,0"  Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true">
+		<Component Text="Поздравляю, Командующий! Мы успешно отбили атаку противника, однако не время расслабляться."
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="125,125,125"
+		FontSize="24" />
+		<Component Text="Далее нас ждёт атака на укреплённый ресурсный центр, контрольные точки ,расположенные там, являются ценным ресурсодобываюшим активом, однако их может захватить любой, кто контролирует их область."
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="175,125,125"
+		FontSize="24" />
+
+		<Component Text="К счастью, у нас есть тактический перевес в силах - танковые дивизии. У них намного большая эффективность и скорость передвижения. Однако их стоимость тоже выше."
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="200,125,125"
+		FontSize="24"/>
+
+		<Component Text="Однако противник уже строит защиту около своих позиций, ожидайте большего количества пехотных дивизий врага. Совет - постройте танковый завод и пробейте защиту врага."
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="125,125,200"
+		FontSize="24"/>
+
+		<Component Text="Также при наступлении учтите рельеф местности. Танки двигаются медленее через леса."
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="100,100,100"
+		FontSize="24"/>
+	</UIElement>
+
+	<UIElement Type="WarDotsIntermediaController" NextLevel="Content/Levels/WarDots/Level_2.xml" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
+
+</Level>

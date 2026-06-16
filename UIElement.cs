@@ -1,6 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System;
 using System.Text;
 
 namespace _2D_Engine_Sokov
@@ -12,6 +11,10 @@ namespace _2D_Engine_Sokov
         private Vector2? _pendingSize = null; 
         private Vector2 _scale = Vector2.One;
         private string _texturePath;
+        public string TexturePath
+        {
+            get => _texturePath;
+        }
         public string Name { get; set; } = "Unnamed";
         public string Tag { get; set; } = "Untagged";
         public bool IsActive { get; set; } = true;
@@ -57,8 +60,7 @@ namespace _2D_Engine_Sokov
                 // Освобождаем старую текстуру, если она была
                 if (!string.IsNullOrEmpty(_texturePath))
                 {
-                    TextureManager.ReleaseTexture(_texturePath);
-                    _texturePath = null;
+                    TextureManager.ReleaseTexture(_texturePath);                  
                 }
                 _texture = value;
                 if (_texture != null)
@@ -117,12 +119,11 @@ namespace _2D_Engine_Sokov
 
         public UIElement()
         {
-            //UISystem.RegisterUIElement(this);
         }
 
         ~UIElement()
         {
-            Game.DisposeUIElement(this);
+            GameContext.RemoveUIElement(this);
            // UISystem.UnregisterUIElement(this);
             if (!string.IsNullOrEmpty(_texturePath))
             {

@@ -1,7 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
-using _2D_Engine_Sokov.GameObjects;
 using _2D_Engine_Sokov.WarDots.Units;
-using System;
 using Microsoft.Xna.Framework.Input;
 
 namespace _2D_Engine_Sokov.WarDots
@@ -25,12 +23,15 @@ namespace _2D_Engine_Sokov.WarDots
 
         private static void Update()
         {
-            HandleCamera();
-            HandleSelection();
-            HandleCameraZoom();
-            HandleCommands();
-            HandlePlacementPreview();
-            DrawSelection();
+            if (GameContext.CurrentLevel?.Name != "LevelMenu") {
+                HandleCamera();
+                HandleSelection();
+                HandleCameraZoom();
+                HandleCommands();
+                HandlePlacementPreview();
+                DrawSelection();
+            }
+
         }
         private static void HandleCamera()
         {
@@ -76,14 +77,14 @@ namespace _2D_Engine_Sokov.WarDots
 
                 var units = GameContext.GetGameObjects().OfType<WarDotsPlayerDivision>()
                                          .Where(u => u.IsActive && u.Tag=="Player");
-                Console.WriteLine(units.Count());
+                //Console.WriteLine(units.Count());
                 foreach (var u in units)
                 {
                     bool selected = false;
                     if (isClick)
                     {
                         // При клике выбираем юнитов в радиусе ~20 единиц от курсора
-                        if (Vector2.DistanceSquared(u.Position, world) < 400f)
+                        if (Vector2.DistanceSquared(u.Position, world) < 640f)
                             selected = true;
                     }
                     else
@@ -130,10 +131,60 @@ namespace _2D_Engine_Sokov.WarDots
             var mouse = Mouse.GetState();
             var world = Vector2.Transform(new Vector2(mouse.X, mouse.Y), Matrix.Invert(cam.TransformMatrix));
 
+            // Проверяем пригодность места в реальном времени
+            bool isValid = CheckPlacementValidity(world, out Color previewColor);
+
             RenderSystem.SubmitPersistentCommand(() => {
-                RenderSystem.FillCircle(world, 18f, new Color(0, 255, 0, 80), 20);
-                RenderSystem.DrawCircle(world, 18f, Color.White, 20);
+                // Зелёный круг, если место подходит, красный - если нет
+                RenderSystem.FillCircle(world, 18f, previewColor, 20);
+                // Обводка тоже меняет цвет для чёткости
+                RenderSystem.DrawCircle(world, 18f, isValid ? Color.White : new Color(255, 80, 80), 20);
             }, 2, useCamera: true);
+        }
+
+        private static bool CheckPlacementValidity(Vector2 worldPos, out Color color)
+        {
+            // По умолчанию - красный полупрозрачный (непригодно)
+            color = new Color(255, 50, 50, 110);
+
+            var tileMap = GameContext.TileMap;
+            if (tileMap == null) return false;
+
+            var grid = tileMap.WorldToGridPosition(worldPos);
+            int gx = Math.Clamp(grid.X, 0, tileMap.Width - 1);
+            int gy = Math.Clamp(grid.Y, 0, tileMap.Height - 1);
+
+            var tile = tileMap.GetTile(gx, gy);
+            // 1. Проверка проходимости (земля, трава, камень...)
+            if (tile == null || !tile.IsWalkable) return false;
+            // 2. Клетка уже занята?
+            if (tileMap.IsOccupied(gx, gy)) return false;
+
+            // 3. Проверка близости к твоим зданиям
+            const float maxBuildDistance = 500f;
+            var playerBuildings = GameContext.GetGameObjects()
+                .OfType<WarDotsBuilding>()
+                .Where(b => b.Tag == "Player");
+
+            if (playerBuildings.Any())
+            {
+                bool isNear = false;
+                foreach (var b in playerBuildings)
+                {
+                    // DistanceSquared быстрее и безопаснее для превью
+                    if (Vector2.DistanceSquared(b.Position, worldPos) <= maxBuildDistance * maxBuildDistance)
+                    {
+                        isNear = true;
+                        break;
+                    }
+                }
+                // Если построек нет, разрешаем (первая база). Если есть, но далеко - запрет.
+                if (!isNear) return false;
+            }
+
+            // Если все условия выполнены - меняем на нежно-зелёный
+            color = new Color(0, 255, 0, 110);
+            return true;
         }
 
         private static void HandleCommands()
@@ -152,12 +203,14 @@ namespace _2D_Engine_Sokov.WarDots
 
                 else if (_selectedUnits.Count > 0)
                 {
-
                     Vector2 offset = Vector2.Zero;
                     foreach (var u in _selectedUnits)
                     {
-                        var path = Pathfinding.FindPath(tileMap, u.Position, world + offset);
-                        if (path?.Count > 0) u.Path = path;
+                        // 🔥 Запускаем расчёт в фоне!
+                        u.PathTask = Pathfinding.FindPathAsync(tileMap, u.Position, world + offset);
+                        // Очищаем старый путь, чтобы юнит не метался, пока считается новый
+                        u.Path.Clear();
+
                         offset += new Vector2(18f, 18f);
                     }
                 }
@@ -176,14 +229,60 @@ namespace _2D_Engine_Sokov.WarDots
             if (tileMap == null) return;
 
             var grid = tileMap.WorldToGridPosition(worldPos);
-            int gx = Math.Clamp(grid.X, 1, tileMap.Width - 2);
-            int gy = Math.Clamp(grid.Y, 1, tileMap.Height - 2);
+            // Защита от выхода за границы карты
+            int gx = Math.Clamp(grid.X, 0, tileMap.Width - 1);
+            int gy = Math.Clamp(grid.Y, 0, tileMap.Height - 1);
 
+            // 1. Проверка пригодности территории (клетка должна быть проходимой/земной)
+            var tile = tileMap.GetTile(gx, gy);
+            if (tile == null || !tile.IsWalkable)
+            {
+                Console.WriteLine("[CONTROLLER] Здесь нельзя строить: непригодная местность.");
+                return;
+            }
+
+            // 2. Клетка уже занята объектом?
             if (tileMap.IsOccupied(gx, gy)) return;
 
-            int cost = _buildType == typeof(WarDotsPlayerFactory) ? 100 : 80;
+            // 3. Проверка близости к твоим зданиям
+            const float maxBuildDistance = 500f; // Настрой под размер своего тайла (обычно 3-4 клетки)
+            bool isNearPlayerStructure = false;
+
+            var existingPlayerBuildings = GameContext.GetGameObjects()
+                .OfType<WarDotsBuilding>()
+                .Where(b => b.Tag == "Player");
+
+            if (existingPlayerBuildings.Any())
+            {
+                foreach (var b in existingPlayerBuildings)
+                {
+                    // Используем DistanceSquared для производительности
+                    if (Vector2.DistanceSquared(b.Position, worldPos) <= maxBuildDistance * maxBuildDistance)
+                    {
+                        isNearPlayerStructure = true;
+                        break;
+                    }
+                }
+
+                if (!isNearPlayerStructure)
+                {
+                    Console.WriteLine("[CONTROLLER] Слишком далеко от своих зданий.");
+                    return;
+                }
+            }
+            // Если построек нет ни одной — разрешаем размещение первой базы
+
+            // 4. Проверка ресурсов
+            int cost = 0;
+            if (_buildType == typeof(WarDotsPlayerInfantryFactory)) cost = 500;
+            else if (_buildType == typeof(WarDotsPlayerTankFactory)) cost = 500;
+            else if (_buildType == typeof(WarDotsPlayerArtilleryFactory)) cost = 500;
+            else if (_buildType == typeof(WarDotsPlayerResourceGenerator)) cost = 500;
+            else return; // Неизвестный тип здания
+
             if (PlayerResources < cost) return;
 
+            // 5. Размещение
             PlayerResources -= cost;
             var building = (WarDotsBuilding)Activator.CreateInstance(_buildType);
             building.Position = tileMap.GridToWorldPosition(gx, gy);
@@ -192,7 +291,7 @@ namespace _2D_Engine_Sokov.WarDots
 
             _isPlacing = false;
             _buildType = null;
-            Console.WriteLine("[CONTROLLER] Здание построено.");
+            Console.WriteLine("[CONTROLLER] Здание успешно построено.");
         }
 
         // Отрисовка рамки выделения
@@ -207,5 +306,7 @@ namespace _2D_Engine_Sokov.WarDots
             );
             RenderSystem.SubmitPersistentCommand(() => RenderSystem.DrawRectangle(rect, Color.Red, 5f), 2, useCamera: true);
         }
+        // Добавь это в конец класса WarDotsPlayerController, чтобы UI мог читать выбор
+        public static IReadOnlyList<WarDotsPlayerDivision> SelectedUnits => _selectedUnits;
     }
 }

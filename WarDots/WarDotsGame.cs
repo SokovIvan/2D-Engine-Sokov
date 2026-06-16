@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Input;
 using _2D_Engine_Sokov.GameObjects;
 using _2D_Engine_Sokov.WarDots;
 using _2D_Engine_Sokov.WarDots.Units;
+using _2D_Engine_Sokov.UIElements;
 
 namespace _2D_Engine_Sokov.WarDots
 {
@@ -28,6 +29,11 @@ namespace _2D_Engine_Sokov.WarDots
         public bool IsMatchActive { get; private set; } = true;
 
         private int _frontlineUpdateFrames = 0;
+
+        private bool _isPauseMenuOpen = false;
+        private KeyboardState _prevKeyboardState;
+        private List<UIElement> _pauseMenuElements = new List<UIElement>();
+        private string _currentLevelPath; // чтобы помнить, куда возвращаться...
         public WarDotsGame()
         {
             Instance = this;
@@ -42,23 +48,17 @@ namespace _2D_Engine_Sokov.WarDots
             LogicSystem.Initialize();
             UISystem.Initialize();
             SoundSystem.Initialize();
-
             RenderSystem.EnableFrustumCulling(true);
-
             // 🔑 Инициализация WarDots-систем вместо старых
             WarDotsPlayerController.Initialize();
             WarDotsEnemyAI.Initialize();
-
             // Ждём полной инициализации графического устройства И камеры
             while (RenderSystem._graphicsDevice == null || RenderSystem.GetCamera() == null)
                 Thread.Sleep(1);
-
             // Загрузка карты (можно заменить на меню)
-            LoadLevel("Content/Levels/WarDots/Level_Test.xml");
-
+            LoadLevel("Content/Levels/WarDots/LevelMenu.xml");
             _isRunning = true;
             var lastUpdate = Environment.TickCount;
-
             // 🔁 Главный цикл (идентичен оригиналу, но с RTS-флагами)
             while (_isRunning)
             {
@@ -83,15 +83,86 @@ namespace _2D_Engine_Sokov.WarDots
 
         private void Update()
         {
-            HandleInput(); 
+            HandleInput();
+
+            // Если меню открыто, останавливаем физику и логику, но оставляем рендер и UI
+            if (_isPauseMenuOpen)
+            {
+                Render();
+                UIUpdate();
+                return;
+            }
+
             BattleMapUpdate();
-            LogicUpdate();         // 📦 Сначала загрузим объекты в систему
-     // 🔍 А потом уже ищем их
+            LogicUpdate();
             PhysicsUpdate();
-            UIUpdate();
-
             Render();
+            UIUpdate();
+        }
+        private void OpenPauseMenu()
+        {
+            _isPauseMenuOpen = true;
+            PhysicsSystem.Pause();
+            LogicSystem.Pause();
 
+            float centerX = RenderSystem._graphicsDevice.Viewport.Width / 2f - 100f;
+            float startY = 250f;
+            float spacing = 70f;
+
+            var config = new[]
+            {
+        ("Продолжить", Color.Green, 0),
+        ("Начать заново", Color.Orange, 1),
+        ("Выход", Color.Red, 2)
+    };
+
+            foreach (var (text, color, idx) in config)
+            {
+                var btn = new Button()
+                {
+                    Position = new Vector2(centerX, startY + idx * spacing),
+                    Size = new Vector2(200, 50),
+                    Color = color,
+                    IsActive = true,
+                    text = text
+                };
+                RenderSystem.EnqueueTextureLoad(btn, "Content/Textures/im1.png");
+                int buttonIndex = idx;
+                btn.OnClick = () => OnPauseMenuButtonClicked(buttonIndex);
+
+                _pauseMenuElements.Add(btn);
+                GameContext.AddUIElement(btn);
+            }
+        }
+
+        private void ClosePauseMenu()
+        {
+            foreach (var el in _pauseMenuElements)
+            {
+                GameContext.RemoveUIElement(el);
+                // RenderSystem.RemoveUIElement(el); // если в твоей версии есть этот метод
+            }
+            _pauseMenuElements.Clear();
+            _isPauseMenuOpen = false;
+
+            PhysicsSystem.Resume();
+            LogicSystem.Resume();
+        }
+
+        private void OnPauseMenuButtonClicked(int index)
+        {
+            ClosePauseMenu();
+            switch (index)
+            {
+                case 1: // Начать заново
+                    if (!string.IsNullOrEmpty(_currentLevelPath))
+                        LoadLevel(_currentLevelPath);
+                    break;
+                case 2: // Выход
+                    Stop();
+                    break;
+                    // case 0 - Продолжить: просто закрываем меню, системы уже возобновлены
+            }
         }
         private void BattleMapUpdate()
         {
@@ -109,15 +180,26 @@ namespace _2D_Engine_Sokov.WarDots
             foreach (var p in players) battleMap.AddUnit(p.Position, true);
             foreach (var e in enemies) battleMap.AddUnit(e.Position, false);
 
-            battleMap.UpdateBoundary();
-            battleMap.SubmitPersistentBoundary(Color.Black, thickness: 15f, framesToLive: 15);
+            _frontlineUpdateFrames++;
+            if (_frontlineUpdateFrames >= 10)
+            {
+                battleMap.UpdateFrontline();
+                _frontlineUpdateFrames = 0;
+            }
+            battleMap.SubmitPersistentBoundary(Color.Brown, thickness: 20f, framesToLive: 15);
 
         }
         private void HandleInput()
         {
+            _prevKeyboardState = keyboardState;
             keyboardState = Keyboard.GetState();
-            if (keyboardState.IsKeyDown(Keys.Escape))
-                Stop();
+
+            // Реагируем только на однократное нажатие, чтобы меню не мерцало
+            //if (keyboardState.IsKeyDown(Keys.Escape) && _prevKeyboardState.IsKeyUp(Keys.Escape))
+            //{
+            //    if (_isPauseMenuOpen) ClosePauseMenu();
+            //    else OpenPauseMenu();
+            //}
         }
 
         private void Render()
@@ -141,12 +223,12 @@ namespace _2D_Engine_Sokov.WarDots
 
         private void UIUpdate()
         {
+
             RenderSystem.SubmitUIElements(GameContext.GetUIElements().Where(s => s.IsActive).ToArray());
         }
 
         public void Stop() => _isRunning = false;
 
-        // 📦 Безопасные методы добавления/удаления (как в оригинале)
         public static void SubmitObject(GameObject obj) => GameContext.AddGameObject(obj);
         public static void SubmitUIElement(UIElement ui) => GameContext.AddUIElement(ui);
 
@@ -154,7 +236,6 @@ namespace _2D_Engine_Sokov.WarDots
         public static void DisposeUIElement(UIElement ui)
         {
             GameContext.RemoveUIElement(ui);
-           // UISystem.UnregisterUIElement(ui); // Если нужно
             RenderSystem.RemoveUIElement(ui);
         }
 
@@ -190,6 +271,7 @@ namespace _2D_Engine_Sokov.WarDots
 
             var newLevel = _parser.LoadLevel(path);
             _currentLevel = newLevel;
+            _currentLevelPath = path;
             GameContext.SetLevel(newLevel);
 
             if (newLevel?.gameObjects != null)
@@ -205,7 +287,6 @@ namespace _2D_Engine_Sokov.WarDots
             if (newLevel?.backgrounds != null)
                 RenderSystem.SubmitBackgrounds(newLevel.backgrounds.Where(b => b != null).ToArray());
 
-            // 🎯 RTS-специфика: отдалённая камера для тактического обзора
             var cam = RenderSystem.GetCamera();
             if (cam != null && newLevel?.TileMap != null)
             {
@@ -237,13 +318,9 @@ namespace _2D_Engine_Sokov.WarDots
                 SoundSystem.StopMusic();
 
             IsLoading = false;
-            //SpawnInitialUnitsAndBuildings();
             IsMatchActive = true;
         }
 
-        /// <summary>
-        /// Корректное завершение матча (победа/поражение)
-        /// </summary>
         public void EndMatch(bool playerWon)
         {
             if (!IsMatchActive) return;
@@ -252,7 +329,6 @@ namespace _2D_Engine_Sokov.WarDots
             PhysicsSystem.Pause();
 
             Console.WriteLine(playerWon ? "[WAR DOTS] 🌸 ПОБЕДА!" : "[WAR DOTS] 💔 ПОРАЖЕНИЕ.");
-            // Здесь можно подключить загрузку экрана результатов через UISystem или LoadLevel
         }       
     }
 

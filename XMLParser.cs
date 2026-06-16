@@ -1,11 +1,13 @@
-﻿
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using System.Xml.Linq;
 using _2D_Engine_Sokov.GameObjects;
 using _2D_Engine_Sokov.UIElements;
 using Microsoft.Xna.Framework.Graphics;
 using _2D_Engine_Sokov.WarDots.Units;
+using _2D_Engine_Sokov.WarDots.UI;
 using _2D_Engine_Sokov.MapGeneration;
+using System.Globalization;
+using static _2D_Engine_Sokov.WarDots.WarDotsEnemyAI;
 
 namespace _2D_Engine_Sokov
 {
@@ -30,7 +32,11 @@ namespace _2D_Engine_Sokov
                 MusicPath = root.Attribute("Music")?.Value,
 
             };
-
+            string strategyStr = root.Attribute("Strategy")?.Value;
+            if (!string.IsNullOrEmpty(strategyStr) && Enum.TryParse(strategyStr, true, out AiStrategy loadedStrategy))
+            {
+                SetStrategy(loadedStrategy);
+            }
             // Парсинг игровых объектов
             foreach (var objElement in root.Elements("GameObject"))
             {
@@ -80,7 +86,11 @@ namespace _2D_Engine_Sokov
 
                 Console.WriteLine($"[Parser] Генерация BattleMap: {width}x{height} (Hash: {hash})");
                 var mapState = MapGenerator.GenerateMapState(width, height, minH, maxH, hash);
-                return BattleMap.FromMapState(mapState, tileW, tileH, RenderSystem._graphicsDevice);
+                var battlemap = BattleMap.FromMapState(mapState, tileW, tileH, RenderSystem._graphicsDevice);
+                battlemap.Hash = hash;
+                battlemap.MinHeight = minH;
+                battlemap.MaxHeight = maxH;
+                return battlemap;
             }
 
             // Fallback: ручная расстановка тайлов (совместимость со старыми уровнями)
@@ -141,27 +151,42 @@ namespace _2D_Engine_Sokov
             Vector2 position = ParseVector2(element.Attribute("Position")?.Value) ?? Vector2.Zero;
             Vector2 scale = ParseVector2(element.Attribute("Scale")?.Value) ?? Vector2.One;
             bool isActive = bool.Parse(element.Attribute("IsActive")?.Value ?? "true");
-            float rotation = float.Parse(element.Attribute("Rotation")?.Value ?? "0");
+            float rotation = 0f;
+            string rotStr = element.Attribute("Rotation")?.Value;
+            if (!string.IsNullOrEmpty(rotStr))
+            {
+                float.TryParse(rotStr, NumberStyles.Float, CultureInfo.InvariantCulture, out rotation);
+            }
 
             GameObject gameObject = null;
 
             switch (typeName)
             {
+                // 🟢 Все дивизии (игрок и враг)
                 case "WarDotsPlayerDivision":
-                    gameObject = new WarDotsPlayerDivision();
-                    break;
+                case "WarDotsPlayerInfantry":
+                case "WarDotsPlayerTank":
+                case "WarDotsPlayerArtillery":
                 case "WarDotsEnemyDivision":
-                    gameObject = new WarDotsEnemyDivision();
-                    break;
+                case "WarDotsEnemyInfantry":
+                case "WarDotsEnemyTank":
+                case "WarDotsEnemyArtillery":
+                // 🏭 Все здания и заводы (игрок и враг)
                 case "WarDotsPlayerFactory":
+                case "WarDotsPlayerInfantryFactory":
+                case "WarDotsPlayerTankFactory":
+                case "WarDotsPlayerArtilleryFactory":
                 case "WarDotsEnemyFactory":
+                case "WarDotsEnemyInfantryFactory":
+                case "WarDotsEnemyTankFactory":
+                case "WarDotsEnemyArtilleryFactory":
                 case "WarDotsPlayerBase":
                 case "WarDotsEnemyBase":
                 case "WarDotsPlayerResourceGenerator":
                 case "WarDotsEnemyResourceGenerator":
-                    var buildType = Type.GetType($"_2D_Engine_Sokov.WarDots.Units.{typeName}");
-                    if (buildType != null)
-                        gameObject = (GameObject)Activator.CreateInstance(buildType);
+                    var targetType = Type.GetType($"_2D_Engine_Sokov.WarDots.Units.{typeName}");
+                    if (targetType != null)
+                        gameObject = (GameObject)Activator.CreateInstance(targetType);
                     break;
 
                 case "PlayerUnit":
@@ -195,6 +220,9 @@ namespace _2D_Engine_Sokov
                         var child = ParseGameObject(compElement);
                         ((EnemyBuilding)gameObject).ProduceUnit = (Unit)child;
                     }
+                    break;
+                case "ControlPoint":
+                    gameObject = new ControlPoint();
                     break;
                 default:
                     gameObject = new GameObject();
@@ -269,8 +297,81 @@ namespace _2D_Engine_Sokov
                     };
                     RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
                     break;
+                case "WarDotsIntermediaController":
+                    var ic = new WarDotsIntermediaController()
+                    {
+                        Position = position,
+                        Size = size,
+                        Color = color,
+                        IsActive = isActive,
+                        text = text,
+                        TextOffset = textOffset
+                    };
+                    string lvlPath = element.Attribute("NextLevel")?.Value;
+                    if (!string.IsNullOrEmpty(lvlPath)) ic.NextLevel = lvlPath;
+                    uiElement = ic; 
+                    RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
+
+                    break;
+                case "WarDotsMatchEndController":
+                    var im = new WarDotsMatchEndController()
+                    {
+                        Position = position,
+                        Size = size,
+                        Color = color,
+                        IsActive = isActive,
+                        text = text,
+                        TextOffset = textOffset
+                    };
+                    string nextlvlPath = element.Attribute("NextLevelPath")?.Value;
+                    if (!string.IsNullOrEmpty(nextlvlPath)) im.NextLevelPath = nextlvlPath;
+                    string curlvlPath = element.Attribute("CurrentLevelPath")?.Value;
+                    if (!string.IsNullOrEmpty(curlvlPath)) im.CurrentLevelPath = curlvlPath;
+                    uiElement = im;
+                    RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
+                    break;
+                case "SaveLoadMenu":
+                    uiElement = new SaveLoadMenu()
+                    {
+                        Position = position,
+                        Size = size,
+                        Color = color,
+                        IsActive = isActive, // Обычно false при загрузке уровня
+                        text = text,
+                        TextOffset = textOffset
+                    };
+                    // Если нужна текстура фона для самого контейнера, можно загрузить
+                    RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
+                    break;
+                case "PauseMenu":
+                    var pm = new PauseMenu()
+                    {
+                        Position = position,
+                        Size = size,
+                        Color = color,
+                        IsActive = isActive,
+                        text = text,
+                        TextOffset = textOffset
+                    };
+                    // Если в XML будет атрибут LevelPath="...", можно распарсить его:
+                    string lPath = element.Attribute("LevelPath")?.Value;
+                    if (!string.IsNullOrEmpty(lPath)) pm.LevelPath = lPath;
+                    uiElement = pm;
+                    break;
                 case "ResShow":
                     uiElement = new ResShow()
+                    {
+                        Position = position,
+                        Size = size,
+                        Color = color,
+                        IsActive = isActive,
+                        text = text,
+                        TextOffset = textOffset
+                    };
+                    RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
+                    break;
+                case "ResShowWD":
+                    uiElement = new ResShowWD()
                     {
                         Position = position,
                         Size = size,
@@ -288,7 +389,7 @@ namespace _2D_Engine_Sokov
                         Size = size,
                         Color = color,
                         IsActive = isActive,
-                        text = text
+                        text = text,                        
                     };
                     RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
                     foreach (var compElement in element.Elements("GameObject"))
@@ -296,6 +397,71 @@ namespace _2D_Engine_Sokov
                         var child = ParseGameObject(compElement);
                         ((BuildButton)uiElement).building = (Building)child;
                     }
+                    break;
+                case "BuildButtonWD":
+                    var wdButton = new BuildButtonWD()
+                    {
+                        Position = position,
+                        Size = size,
+                        Color = color,
+                        IsActive = isActive,
+                        text = text,
+                        // Парсим стоимость из атрибута Cost, если он есть, иначе 100
+                        Cost = int.Parse(element.Attribute("Cost")?.Value ?? "100")
+                    };
+
+                    // Определяем тип здания из атрибута BuildingType
+                    string buildTypeName = element.Attribute("BuildingType")?.Value;
+                    if (!string.IsNullOrEmpty(buildTypeName))
+                    {
+                        // Предполагаем, что типы зданий лежат в _2D_Engine_Sokov.WarDots.Units
+                        var type = Type.GetType($"_2D_Engine_Sokov.WarDots.Units.{buildTypeName}");
+                        if (type != null)
+                        {
+                            wdButton.BuildingType = type;
+                        }
+                    }
+
+                    RenderSystem.EnqueueTextureLoad(wdButton, texturePath);
+                    uiElement = wdButton;
+                    break;
+                case "UnitSelectionPanel":
+                    uiElement = new UnitSelectionPanel()
+                    {
+                        Position = position,
+                        Size = size,
+                        Color = color,
+                        IsActive = isActive,
+                        text = text,
+                        TextOffset = textOffset
+                    };
+                    // Текстура здесь может быть фоном, сами иконки рисуются внутри
+                    RenderSystem.EnqueueTextureLoad(uiElement, texturePath);
+                    break;
+                case "ProduceButtonWD":
+                    var prodButton = new ProduceButtonWD()
+                    {
+                        Position = position,
+                        Size = size,
+                        Color = color,
+                        IsActive = isActive, // Будет false при загрузке
+                        text = text,
+                        TextOffset = textOffset,
+                        Cost = int.Parse(element.Attribute("Cost")?.Value ?? "25")
+                    };
+
+                    string unitTypeName = element.Attribute("UnitType")?.Value;
+                    if (!string.IsNullOrEmpty(unitTypeName))
+                    {
+                        var type = Type.GetType($"_2D_Engine_Sokov.WarDots.Units.{unitTypeName}");
+                        if (type != null)
+                        {
+                            prodButton.UnitType = type;
+                        }
+                    }
+
+                    RenderSystem.EnqueueTextureLoad(prodButton, texturePath);
+                    uiElement = prodButton;
                     break;
                 case "PlayerController":
                     uiElement = new PlayerController()
@@ -427,6 +593,7 @@ namespace _2D_Engine_Sokov
             string texturePath = element.Attribute("Texture")?.Value;
             Vector2 position = ParseVector2(element.Attribute("Position")?.Value) ?? Vector2.Zero;
             Vector2 scale = ParseVector2(element.Attribute("Scale")?.Value) ?? Vector2.One;
+            Vector2 size = ParseVector2(element.Attribute("Size")?.Value) ?? Vector2.One;
             Color color = ParseColor(element.Attribute("Color")?.Value) ?? Color.White;
             bool isActive = bool.Parse(element.Attribute("IsActive")?.Value ?? "true");
 
@@ -438,6 +605,7 @@ namespace _2D_Engine_Sokov
                 Scale = scale,
                 Color = color,
                 IsActive = isActive,
+                Size = size,
                 LayerDepth = 1f
             };
             RenderSystem.EnqueueTextureLoad(sprite, texturePath);

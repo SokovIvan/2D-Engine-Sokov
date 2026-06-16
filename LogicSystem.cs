@@ -23,7 +23,7 @@ namespace _2D_Engine_Sokov
             _isRunning = true;
             _logicThread = new Thread(LogicThreadLoop) { IsBackground = true, Name = "LogicThread", Priority = ThreadPriority.AboveNormal };
             _logicThread.Start();
-            UIActionsInitialise();
+
         }
 
         // 🔄 Обновление теперь берёт безопасный снимок из контекста
@@ -76,15 +76,6 @@ namespace _2D_Engine_Sokov
         public static void Shutdown() { _isRunning = false; _logicThread?.Join(); }
 
         // 🔧 UIActions оставляем без изменений, они используют GameContext.Find...
-        static void UIActionsInitialise()
-        {
-            UIActions.RegisterAction("StopEnemies", () => {
-                var enemy = GameContext.FindGameObjectByTag("Enemy");
-                if (enemy != null) enemy.IsActive = false;
-            });
-            UIActions.RegisterAction("GameQuit", () => Game.instance?.Stop());
-            UIActions.RegisterAction("Continue", () => Game.instance?.LoadLevel("Content/Levels/Level0.xml"));
-            UIActions.RegisterAction("StartGame", () => Game.instance?.LoadLevel("Content/Levels/Level0.xml"));
-        }
+
     }
 }

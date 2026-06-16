@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Level Name="LevelMenu" BackgroundColor="0,0,0" Gravity="500" Music="Content/Music/HOISFHNB.mp3">
+
+	<Background>
+		<Sprite Texture="Content/Textures/menu_robot.png" Position="640,360" Scale ="1,1" Size ="1280,720" />
+	</Background>
+	<UIElement Type="Button" TextOffset="30,30" Position="0,25" Size ="140,75" Text ="Начать" OnClick="StartWarDotsGame"  Color="0,0,0" Texture="Content/Textures/im1.png"/>
+	<UIElement Type="Button" TextOffset="5,30" Position="0,175" Size ="140,75" Text ="Продолжить" OnClick="LoadLastSave" Color="0,0,0"  Texture="Content/Textures/im1.png"/>
+	<UIElement Type="Button" TextOffset="15,30" Position="0,325" Size ="140,75" Text ="Загрузка" OnClick="OpenLoadMenu" Color="0,0,0"  Texture="Content/Textures/im1.png"/>
+	<UIElement Type="Button" TextOffset="15,30" Position="0,475" Size ="140,75" Text ="Сражение" OnClick="Battle" Color="0,0,0"  Texture="Content/Textures/im1.png"/>
+
+	<UIElement Type="Button" TextOffset="30,30" Position="0,625" Size ="140,75" Text ="Выход" OnClick="WarDotsGameQuit" Color="0,0,0"  Texture="Content/Textures/im1.png"/>
+
+	<UIElement Type="SaveLoadMenu" Position="0,0" Size="0,0" IsActive="false" />
+</Level>

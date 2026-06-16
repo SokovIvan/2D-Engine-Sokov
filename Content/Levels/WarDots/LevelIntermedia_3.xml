@@ -1,0 +1,46 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Level Name="LevelIntermedia_3" BackgroundColor="100,149,237" Gravity="500"  Music="Content/Music/отпустить спидап3.mp3">
+
+
+	<UIElement Type="Animation" TextColor ="0,0,0" Size="1280,720" TextOffset="0,0" Rate="10" Position="0,0"  Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true">
+		
+		<Component Text="Командующий, последняя битва прошла успешно, однако враг уже собирает силы для контратаки. Необходимо выдвинуться и отразить наступление."
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="125,125,125"
+		FontSize="24" />
+		
+		<Component Text="К сожалению, наши силы в том направлении ограничены, используйте артиллерийские дивизии для дальнего устронения танковых дивизий врага."
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="125,200,125"
+		FontSize="24" />
+		
+		<Component Text="Будьте осторожнее, ведь артиллерия передвигается намного медленнее остальных дивизий. Постарайтесь прикрыть подходы к артиллерии с помощью пехотных дивизий."
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="125,125,200"
+		FontSize="24"/>
+		
+		<Component Text="Постарайтесь перехватить нейтральные склады снабжения для дполнительных ресурсов, иначе противник получит численное превосходство."
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="200,125,125"
+		FontSize="24"/>
+
+		<Component Text="Удачи, Командующий. Мы надеемся на Вас!"
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="200,125,125"
+		FontSize="24"/>
+		
+	</UIElement>
+
+	<UIElement Type="WarDotsIntermediaController" NextLevel="Content/Levels/WarDots/Level_3.xml" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
+
+</Level>

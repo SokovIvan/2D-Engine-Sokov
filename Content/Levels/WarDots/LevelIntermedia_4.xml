@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Level Name="LevelIntermedia_3" BackgroundColor="100,149,237" Gravity="500"  Music="Content/Music/отпустить спидап3.mp3">
+
+
+	<UIElement Type="Animation" TextColor ="0,0,0" Size="1280,720" TextOffset="0,0" Rate="10" Position="0,0"  Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true">
+
+		<Component Text="Командующий! Вы опрвдываете самые смелые ожидания! Последняя битва прошла блестяще благодаря вашему таланту!"
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="125,200,125"
+		FontSize="24" />
+
+		<Component Text="Теперь нуступила наша очередь атаковать, танки уже размещены на позициях для атаки, однако стоит опасаться артиллерийских позиций врага. "
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="225,125,125"
+		FontSize="24"/>
+
+		<Component Text="Внимательно следите за местностью при передвижении и атакуйте дивизии с незащищённых сторон."
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="125,125,125"
+		FontSize="24"/>
+
+		<Component Text="На данный момент вам доступны все виды войск, которые у нас есть на данный момент, без сомнения, у вас получится!"
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="125,125,200"
+		FontSize="24"/>
+		
+	</UIElement>
+
+	<UIElement Type="WarDotsIntermediaController" NextLevel="Content/Levels/WarDots/Level_4.xml" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
+
+</Level>

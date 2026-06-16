@@ -28,8 +28,73 @@ namespace _2D_Engine_Sokov
             _isRunning = true;
             _UIThread = new Thread(UIThreadLoop) { IsBackground = true, Name = "UIThread", Priority = ThreadPriority.AboveNormal };
             _UIThread.Start();
+            UIActionsInitialise();
         }
+        static void UIActionsInitialise()
+        {
+            UIActions.RegisterAction("StopEnemies", () => {
+                var enemy = GameContext.FindGameObjectByTag("Enemy");
+                if (enemy != null) enemy.IsActive = false;
+            });
+            UIActions.RegisterAction("GameQuit", () => Game.instance?.Stop());
+            UIActions.RegisterAction("Continue", () => Game.instance?.LoadLevel("Content/Levels/Level0.xml"));
+            UIActions.RegisterAction("StartGame", () => Game.instance?.LoadLevel("Content/Levels/Level0.xml"));
 
+            UIActions.RegisterAction("StartWarDotsGame", () =>
+            {
+               WarDots.WarDotsGame.Instance?.LoadLevel("Content/Levels/WarDots/LevelIntermedia_1.xml");
+                Console.WriteLine("WarDotsGameStart");
+            });
+            UIActions.RegisterAction("Battle", () =>
+            {
+                WarDots.WarDotsGame.Instance?.LoadLevel("Content/Levels/WarDots/Level_Test.xml");
+                Console.WriteLine("WarDotsBattleStart");
+            });
+            UIActions.RegisterAction("ContinueWarDots", () =>
+            {
+                WarDots.WarDotsGame.Instance?.LoadLevel("Content/Levels/WarDots/LevelIntermedia_1.xml");
+                Console.WriteLine("WarDotsGameStart");
+            });
+            UIActions.RegisterAction("WarDotsGameQuit", () => WarDots.WarDotsGame.Instance?.Stop());
+            UIActions.RegisterAction("LoadLastSave", () =>
+            {
+                string lastSavePath = SaveSystem.GetLatestSavePath();
+                if (!string.IsNullOrEmpty(lastSavePath))
+                {
+                    Console.WriteLine($"[MENU] Загрузка последнего сохранения: {lastSavePath}");
+                    WarDots.WarDotsGame.Instance?.LoadLevel(lastSavePath);
+                }
+                else
+                {
+                    WarDots.WarDotsGame.Instance?.LoadLevel("Content/Levels/WarDots/LevelIntermedia_1.xml");
+                }
+            });
+            UIActions.RegisterAction("OpenLoadMenu", () =>
+            {
+                // Ищем все элементы типа SaveLoadMenu
+                var menus = GameContext.GetUIElements().OfType<SaveLoadMenu>().ToList();
+                if (menus.Any())
+                {
+                    // Берем первый найденный (обычно он один)
+                    menus.First().OpenMenu();
+                    Console.WriteLine("[MENU] Открыто меню загрузки");
+                }
+                else
+                {
+                    Console.WriteLine("[ERROR] SaveLoadMenu не найден в сцене!");
+                }
+            });
+
+            // Также полезно добавить действие для закрытия, если нужно
+            UIActions.RegisterAction("CloseLoadMenu", () =>
+            {
+                var menus = GameContext.GetUIElements().OfType<SaveLoadMenu>().ToList();
+                if (menus.Any())
+                {
+                    menus.First().CloseMenu();
+                }
+            });
+        }
         private static void UIThreadLoop()
         {
             double lastUpdateTime = 0;
@@ -88,12 +153,14 @@ namespace _2D_Engine_Sokov
                                       .OrderByDescending(e => e.LayerDepth)
                                       .ToList();
 
+
             foreach (var element in elements)
             {
                 if (IsPointInElement(mousePosition, element))
                 {
                     OnElementClicked?.Invoke(element);
                     element.OnClick?.Invoke();
+                    Console.WriteLine(element.Name);
                     break;
                 }
             }
@@ -112,6 +179,7 @@ namespace _2D_Engine_Sokov
         {
             if (element == null || !element.IsActive) return false;
             return IsPointInElement(GetMousePosition(), element);
+
         }
     }
 }

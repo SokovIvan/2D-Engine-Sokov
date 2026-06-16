@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +9,7 @@ namespace _2D_Engine_Sokov.WarDots.Units
 {
     public class WarDotsPlayerResourceGenerator : WarDotsBuilding
     {
-        public float GenerationRate { get; set; } = 12f;
+        public float GenerationRate { get; set; } = 1f;
         private float _genTimer;
         public WarDotsPlayerResourceGenerator() {
             Tag = "Player";
@@ -16,6 +17,7 @@ namespace _2D_Engine_Sokov.WarDots.Units
             ProduceUnit = null;
             string texturePath = "Content/Textures/plbuild_resgen.png";
             this.LoadTexture(texturePath);
+            Size = new Vector2(64, 64);
         }
         public override void Start()
         {

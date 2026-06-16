@@ -17,9 +17,6 @@ namespace _2D_Engine_Sokov.WarDots.Units
             Health = 300f;
             ProducingTime = 7f;
             MaxQueueSize = 4;
-            string texturePath = "Content/Textures/enbuild.png";
-            RenderSystem.EnqueueTextureLoad(this, texturePath);
-
         }
         public override void Start()
         {
@@ -35,8 +32,11 @@ namespace _2D_Engine_Sokov.WarDots.Units
 
         protected override void OnBeforeUnitSpawned(Unit unit)
         {
-            if (unit is WarDotsDivision div)
+            if (unit is WarDotsDivision div) {
                 div.Tag = "Enemy";
+                div.Size = new Microsoft.Xna.Framework.Vector2(32, 32);
+            }
+
         }
     }
 }

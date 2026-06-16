@@ -154,8 +154,8 @@ namespace _2D_Engine_Sokov.MapGeneration
         public static MapState GenerateMapState(int width = 96, int height = 96, int min_height = -5, int max_height = 5, int hash = 0)
         {
             MapGroundStates[,] Map = new MapGroundStates[width, height];
-            int[,] HeightMap = new int[width, height];
-            Random random = new Random(hash);
+            int[,] HeightMap = new int[width, height];                
+            Random random = new(hash);
             int c = 5;
             int rad = width / c;
             HeightMap = ApplyBlobLayer(random, width, height, HeightMap, count: c, avgIntensity: (max_height - min_height), avgRadius: rad , min_height: min_height, max_height: max_height);

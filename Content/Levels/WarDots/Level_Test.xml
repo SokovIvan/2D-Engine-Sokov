@@ -1,36 +1,47 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Level Name="WarDots_Procedural" BackgroundColor="30,30,40" Gravity="0" Music="Content/Music/HOISFHNB.mp3">
-	<TileMap Width="128" Height="128" TileWidth="32" TileHeight="32"
-			 AutoGenerate="true" Hash="239" MinHeight="-8" MaxHeight="12" />
+    <TileMap Width="128" Height="128" TileWidth="32" TileHeight="32" 
+             AutoGenerate="true" Hash="5679" MinHeight="-10" MaxHeight="12" Strategy="Random"/>
 
-	<!-- Игрок: база + стартовые силы -->
-	<GameObject Type="WarDotsPlayerBase" Position="400,400" Size="80,80" Tag="Player" />
+    <!-- ИГРОК: База + Пехотный завод + Генератор + 5 пехотных дивизий -->
+    <GameObject Type="WarDotsPlayerBase" Position="400,400" Size="80,80" Tag="Player" />
+    <GameObject Type="WarDotsPlayerInfantryFactory" Position="520,400" Size="64,64" Tag="Player" />
+    <GameObject Type="WarDotsPlayerResourceGenerator" Position="280,450" Size="64,64" Tag="Player" />
+    <GameObject Type="WarDotsPlayerInfantry" Position="368,350" Size="32,32" Tag="Player" />
+    <GameObject Type="WarDotsPlayerInfantry" Position="416,400" Size="32,32" Tag="Player" />
+    <GameObject Type="WarDotsPlayerInfantry" Position="450,450" Size="32,32" Tag="Player" />
+    <GameObject Type="WarDotsPlayerInfantry" Position="500,500" Size="32,32" Tag="Player" />
+    <GameObject Type="WarDotsPlayerInfantry" Position="550,550" Size="32,32" Tag="Player" />
 
-	<GameObject Type="WarDotsPlayerFactory" Position="550,400" Size="64,64" Tag="Player"  />
-	<GameObject Type="WarDotsPlayerResourceGenerator" Position="250,500" Size="64,64" Tag="Player" />
+    <!-- ВРАГ: База + Пехотный завод + Генератор + 5 пехотных дивизий -->
+    <GameObject Type="WarDotsEnemyBase" Position="3600,3600" Size="80,80" Tag="Enemy" />
+    <GameObject Type="WarDotsEnemyInfantryFactory" Position="3480,3600" Size="64,64" Tag="Enemy" />
+    <GameObject Type="WarDotsEnemyResourceGenerator" Position="3720,3650" Size="64,64" Tag="Enemy" />
+    <GameObject Type="WarDotsEnemyInfantry" Position="3450,3550" Size="32,32" Tag="Enemy" />
+    <GameObject Type="WarDotsEnemyInfantry" Position="3480,3550" Size="32,32" Tag="Enemy" />
+    <GameObject Type="WarDotsEnemyInfantry" Position="3510,3550" Size="32,32" Tag="Enemy" />
+    <GameObject Type="WarDotsEnemyInfantry" Position="3540,3550" Size="32,32" Tag="Enemy" />
+    <GameObject Type="WarDotsEnemyInfantry" Position="3570,3550" Size="32,32" Tag="Enemy" />
+	
+	<!-- Нейтральные точки -->
+	<GameObject Type="ControlPoint" Position="1280,3550" Size="64,64" Tag="Neutral" />
+	<GameObject Type="ControlPoint" Position="2480,350" Size="64,64" Tag="Neutral" />
+	
+    <!-- UI ЭЛЕМЕНТЫ -->
+    <UIElement Type="ResShowWD" Text="ResShowWD" Position="0,0" Size="150,50" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true" />
 
-	<!-- 6 начальных дивизий игрока -->
-	<GameObject Type="WarDotsPlayerDivision" Position="380,520" Size="32,32" Tag="Player"  />
-	<GameObject Type="WarDotsPlayerDivision" Position="420,520" Size="32,32" Tag="Player" />
-	<GameObject Type="WarDotsPlayerDivision" Position="380,560" Size="32,32" Tag="Player" />
-	<GameObject Type="WarDotsPlayerDivision" Position="460,520" Size="32,32" Tag="Player" />
-	<GameObject Type="WarDotsPlayerDivision" Position="340,480" Size="32,32" Tag="Player" />
-	<GameObject Type="WarDotsPlayerDivision" Position="500,480" Size="32,32" Tag="Player" />
+    <!-- Кнопки постройки заводов -->
+    <UIElement Type="BuildButtonWD" Text="Пех. Завод" Position="0,100" Size="150,50" Color="100,200,100" Texture="Content/Textures/im1.png" IsActive="true" Cost="500" BuildingType="WarDotsPlayerInfantryFactory" />
+    <UIElement Type="BuildButtonWD" Text="Танк. Завод" Position="0,160" Size="150,50" Color="150,200,100" Texture="Content/Textures/im1.png" IsActive="true" Cost="500" BuildingType="WarDotsPlayerTankFactory" />
+    <UIElement Type="BuildButtonWD" Text="Арт. Завод" Position="0,220" Size="150,50" Color="200,200,100" Texture="Content/Textures/im1.png" IsActive="true" Cost="500" BuildingType="WarDotsPlayerArtilleryFactory" />
+    <UIElement Type="BuildButtonWD" Text="Генератор" Position="0,280" Size="150,50" Color="100,100,200" Texture="Content/Textures/im1.png" IsActive="true" Cost="500" BuildingType="WarDotsPlayerResourceGenerator" />
 
-	<!-- Враг: база + стартовые силы -->
-	<GameObject Type="WarDotsEnemyBase" Position="3600,3600" Size="80,80" Tag="Enemy"  />
+    <!-- Универсальная кнопка производства (динамически подстраивается под выбранный завод) -->
+    <UIElement Type="ProduceButtonWD" Text="" Position="0,0" Size="250,50" Color="50,50,50" Texture="Content/Textures/im1.png" IsActive="false" Cost="25" UnitType="WarDotsPlayerDivision" />
 
-	<GameObject Type="WarDotsEnemyFactory" Position="3750,3600" Size="64,64" Tag="Enemy"  />
-	<GameObject Type="WarDotsEnemyFactory" Position="3450,3700" Size="64,64" Tag="Enemy" />
-	<GameObject Type="WarDotsEnemyResourceGenerator" Position="3800,3750" Size="64,64" Tag="Enemy" />
+    <UIElement Type="UnitSelectionPanel" Text="" Position="10,600" Size="100,50" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true" />
 
-	<!-- 8 начальных дивизий врага -->
-	<GameObject Type="WarDotsEnemyDivision" Position="3550,3550" Size="32,32" Tag="Enemy"  />
-	<GameObject Type="WarDotsEnemyDivision" Position="3650,3550" Size="32,32" Tag="Enemy"  />
-	<GameObject Type="WarDotsEnemyDivision" Position="3550,3650" Size="32,32" Tag="Enemy"  />
-	<GameObject Type="WarDotsEnemyDivision" Position="3750,3650" Size="32,32" Tag="Enemy" />
-	<GameObject Type="WarDotsEnemyDivision" Position="3500,3700" Size="32,32" Tag="Enemy"  />
-	<GameObject Type="WarDotsEnemyDivision" Position="3700,3500" Size="32,32" Tag="Enemy" />
-	<GameObject Type="WarDotsEnemyDivision" Position="3800,3700" Size="32,32" Tag="Enemy" />
-	<GameObject Type="WarDotsEnemyDivision" Position="3450,3550" Size="32,32" Tag="Enemy"  />
+	<UIElement Type="PauseMenu" Text="" LevelPath="Content/Levels/WarDots/Level_Test.xml" Position="0,0" Size="0,0" Color="0,0,0,0" Texture="Content/Textures/im1.png" IsActive="true" />
+	<UIElement Type="WarDotsMatchEndController" NextLevelPath="Content/Levels/WarDots/LevelMenu.xml" CurrentLevelPath="Content/Levels/WarDots/Level_Test.xml" LoadDelay="2.5" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
+
 </Level>

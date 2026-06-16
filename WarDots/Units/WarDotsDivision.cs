@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using _2D_Engine_Sokov.GameObjects;
+using _2D_Engine_Sokov.MapGeneration;
 using System;
 using System.Collections.Generic;
 
@@ -33,33 +34,50 @@ namespace _2D_Engine_Sokov.WarDots.Units
         {
 
             base.Update(deltaTime);
+            CheckCellStatePosition();
 
-            //DrawHeightDependent();
+           // DrawHeightDependent();
+        }
+        public void CheckCellStatePosition() {
+            if (GameContext.TileMap != null && GameContext.TileMap is BattleMap battleMap)
+            {
+                MapGroundStates cellState = battleMap.getGroundStateFromWorldPosition(Position);
+                MoveSpeed = NormalMoveSpeed;
+                AttackRange = NormalAttackRange;
+                AttackCooldown = NormalAttackCooldown;
+                AttackDamage = NormalAttackDamage;
+                switch (cellState)
+                {
+                    case MapGroundStates.toxic:
+                        Health -= 1;
+                        break;
+                    case MapGroundStates.lava:
+                        Health -= 1;
+                        break;
+                    case MapGroundStates.water:
+                        MoveSpeed = NormalMoveSpeed / 4;
+                        break;
+                    case MapGroundStates.forest:
+                        AttackRange = NormalAttackRange / 2;
+                        break;
+                    case MapGroundStates.stone:
+                        AttackCooldown = NormalAttackCooldown * 2;
+                        break;
+                    case MapGroundStates.xeno:
+                        AttackDamage = NormalAttackDamage * 2;
+                        break;
+                    case MapGroundStates.resource:
+                        AttackDamage = NormalAttackDamage * 2;
+                        break;
+                }
+            }
         }
 
         private void DrawHeightDependent()
         {
-            // Если "высота" выше порога видимости, не рисуем
-            if (Altitude >= AltitudeHidden) return;
+            Altitude = RenderSystem.GetCamera().Zoom;
 
-            Color mainColor = Tag == "Player" ? Color.CornflowerBlue : Color.Crimson;
-            if (!IsActive) mainColor = Color.Gray;
-
-            // RenderSystem использует ConcurrentQueue, поэтому вызов из потока логики безопасен
-            if (Altitude <= AltitudeFullDetail)
-            {
-                RenderSystem.SubmitPersistentCommand(() => RenderSystem.FillCircle(Position, Radius, mainColor, 32), framesToLive: 5);
-                RenderSystem.SubmitPersistentCommand(() => RenderSystem.DrawCircle(Position, Radius, Color.Black, 32, 2f), framesToLive: 5);
-                // Полная детализация: заполненный круг + чёрная обводка
-
-            }
-            else
-            {
-                // Упрощённая отрисовка: только обводка, радиус плавно уменьшается
-                float t = (Altitude - AltitudeFullDetail) / (AltitudeHidden - AltitudeFullDetail);
-                float simplifiedRadius = MathHelper.Lerp(Radius, Radius * 0.5f, t);
-                RenderSystem.DrawCircle(Position, simplifiedRadius, mainColor, 16, 1.5f);
-            }
+            
         }
     }
 }

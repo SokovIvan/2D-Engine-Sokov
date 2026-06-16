@@ -18,37 +18,40 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Content\Levels\Level4.xml">
+    <None Update="Content\Levels\WarDots\LevelIntermedia_6.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Content\Levels\LevelIntermedia_3.xml">
+    <None Update="Content\Levels\WarDots\LevelIntermedia_5.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Content\Levels\LevelIntermedia_2.xml">
+    <None Update="Content\Levels\WarDots\LevelIntermedia_4.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Content\Levels\LevelIntermedia_1.xml">
+    <None Update="Content\Levels\WarDots\LevelIntermedia_3.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Content\Levels\LevelMenu.xml">
+    <None Update="Content\Levels\WarDots\LevelIntermedia_2.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Content\Levels\Level0.xml">
+    <None Update="Content\Levels\WarDots\LevelIntermedia_1.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Content\Levels\Level5.xml">
+    <None Update="Content\Levels\WarDots\LevelMenu.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Content\Levels\Level3.xml">
+    <None Update="Content\Levels\WarDots\Level_5.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Content\Levels\Level2.xml">
+    <None Update="Content\Levels\WarDots\Level_4.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Content\Levels\Level1.xml">
+    <None Update="Content\Levels\WarDots\Level_3.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Content\Levels\Scene_0.xml">
+    <None Update="Content\Levels\WarDots\Level_2.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Levels\WarDots\Level_1.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Content\Levels\WarDots\Level_Test.xml">
@@ -78,13 +81,37 @@
     <None Update="Content\Music\отпустить спидап3.mp3">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\Textures\Assistant_0.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Textures\control_point.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\Textures\enbuild.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Textures\enbuild_artillery.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Textures\enbuild_infantry.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Content\Textures\enbuild_resgen.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\Textures\enbuild_tank.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\Textures\enemy.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Textures\enemy_artillery.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Textures\enemy_infantry.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Textures\enemy_tank.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Content\Textures\entur.png">
@@ -102,16 +129,40 @@
     <None Update="Content\Textures\im2.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\Textures\menu.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Textures\menu_robot.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\Textures\path.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Content\Textures\player.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\Textures\player_artillery.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Textures\player_infantry.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Textures\player_tank.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\Textures\plbuild.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\Textures\plbuild_artillery.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Textures\plbuild_infantry.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\Textures\plbuild_resgen.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Content\Textures\plbuild_tank.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="Content\Textures\wall.jpg">
@@ -124,7 +175,6 @@
 
   <ItemGroup>
     <Folder Include="Content\Maps\" />
-    <Folder Include="WarDots\UI\" />
   </ItemGroup>
 
 </Project>

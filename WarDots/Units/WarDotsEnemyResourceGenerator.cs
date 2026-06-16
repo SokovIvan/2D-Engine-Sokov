@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +9,7 @@ namespace _2D_Engine_Sokov.WarDots.Units
 {
     public class WarDotsEnemyResourceGenerator : WarDotsBuilding
     {
-        public float GenerationRate { get; set; } = 10f; // Ресурсов в секунду
+        public float GenerationRate { get; set; } = 1f; // Ресурсов в секунду
         private float _generationTimer;
 
         public WarDotsEnemyResourceGenerator(){
@@ -17,6 +18,7 @@ namespace _2D_Engine_Sokov.WarDots.Units
             ProduceUnit = null; // Отключаем производство юнитов
             string texturePath = "Content/Textures/enbuild_resgen.png";
             RenderSystem.EnqueueTextureLoad(this, texturePath);
+            Size = new Vector2(64, 64);
         }
         public override void Start()
         {

@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Level Name="LevelIntermedia_3" BackgroundColor="100,149,237" Gravity="500"  Music="Content/Music/отпустить спидап3.mp3">
+
+
+	<UIElement Type="Animation" TextColor ="0,0,0" Size="1280,720" TextOffset="0,0" Rate="10" Position="0,0"  Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true">
+
+		<Component Text="Командующий,ваши победы осложнили положение врага в секторе. Однако остаётся ещё один главный опорный пункт. Пока враг не выбит с него - атаки будут продолжаться, и сектор не может быть по-настоящему защищён."
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="175,125,125"
+		FontSize="24" />
+
+
+		<Component Text="Теперь когда все наши силы собраны, тактика остаётся на ваше усмотрении, комбинируйте войска и вытесните противника. Но будьте осторожны противник обладает большими резервами."
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="100,175,175"
+		FontSize="24"/>
+
+		<Component Text=""
+		Texture="Content/Textures/Assistant_0.png"
+		Position="0,0"
+		Size="1280,720"
+		Color="125,125,200"
+		FontSize="24"/>
+		
+	</UIElement>
+
+	<UIElement Type="WarDotsIntermediaController" NextLevel="Content/Levels/WarDots/Level_5.xml" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
+
+</Level>

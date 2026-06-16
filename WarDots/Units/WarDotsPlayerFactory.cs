@@ -1,4 +1,5 @@
-﻿using System;
+﻿using _2D_Engine_Sokov.GameObjects;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,13 +15,21 @@ namespace _2D_Engine_Sokov.WarDots.Units
             Health = 320f;
             ProducingTime = 6.5f;
             MaxQueueSize = 4;
-            string texturePath = "Content/Textures/plbuild.png";
-            RenderSystem.EnqueueTextureLoad(this, texturePath);
+
 
         }
         public override void Start()
         {
             base.Start();
+
+        }
+        protected override void OnBeforeUnitSpawned(Unit unit)
+        {
+            if (unit is WarDotsDivision div)
+            {
+                div.Tag = "Player";
+                div.Size = new Microsoft.Xna.Framework.Vector2(32, 32);
+            }
 
         }
 

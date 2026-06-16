@@ -1,31 +1,46 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using _2D_Engine_Sokov.MapGeneration;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace _2D_Engine_Sokov
 {
     /// <summary>
-    /// Боевая карта, объединяющая логику MapState и отрисовку TileMap.
-    /// Автоматически вычисляет и рисует динамическую линию границы между игроками и противниками.
+    /// Состояние контроля клетки: 0-Нейтральная, 1-Игрок, 2-Враг, 3-Спорная
     /// </summary>
+    public enum CellControlState : byte { Neutral = 0, Player = 1, Enemy = 2, Contested = 3 }
+
     public class BattleMap : TileMap
     {
         public MapState MapState { get; private set; }
-
         private readonly List<Vector2> _playerUnits = new();
         private readonly List<Vector2> _enemyUnits = new();
-        private List<Vector2> _boundaryPoints = new();
 
+        // 4) Отдельная структура для хранения состояния каждой клетки
+        private CellControlState[,] _territoryMap;
+
+        // 3) Поддержка разорванных линий (окружения, анклавы)
+        private List<List<Vector2>> _frontlineSegments = new();
+        private List<Vector2> _cachedDefensivePositions = new();
+        private bool _defensivePositionsValid = false; // Флаг валидности кэша
         public BattleMap(int width, int height, int tileWidth, int tileHeight, MapState mapState)
             : base(width, height, tileWidth, tileHeight)
         {
             MapState = mapState;
+            _territoryMap = new CellControlState[width, height];
             InitializeTilesFromMapState();
         }
-
+        public MapGroundStates getGroundStateFromWorldPosition(Vector2 worldPos)
+        {
+            try
+            {
+                Point gridPos = WorldToGridPosition(worldPos);
+                return MapState.getGroundState(gridPos.X, gridPos.Y);
+            }
+            catch (Exception e)
+            {
+                return MapGroundStates.emptiness;
+            }
+        }
         private void InitializeTilesFromMapState()
         {
             var defaultWalkable = new HashSet<MapGroundStates>
@@ -45,7 +60,18 @@ namespace _2D_Engine_Sokov
                 }
             }
         }
+        public CellControlState GetControlStateAtPosition(Vector2 worldPosition)
+        {
+            Point gridPos = WorldToGridPosition(worldPosition);
 
+            // Проверка границ карты
+            if (gridPos.X < 0 || gridPos.X >= Width || gridPos.Y < 0 || gridPos.Y >= Height)
+            {
+                return CellControlState.Neutral; // Или можно выбросить исключение, но нейтраль безопаснее
+            }
+
+            return _territoryMap[gridPos.X, gridPos.Y];
+        }
         /// <summary>
         /// Фабричный метод: создаёт BattleMap из MapState, загружает визуальную текстуру и применяет правила проходимости.
         /// </summary>
@@ -106,103 +132,277 @@ namespace _2D_Engine_Sokov
         {
             if (isPlayer) _playerUnits.Add(worldPosition);
             else _enemyUnits.Add(worldPosition);
-            UpdateBoundary();
+            UpdateFrontline(); // Переименовано для ясности
         }
 
         public void RemoveUnit(Vector2 worldPosition, bool isPlayer)
         {
             if (isPlayer) _playerUnits.Remove(worldPosition);
             else _enemyUnits.Remove(worldPosition);
-            UpdateBoundary();
+            UpdateFrontline();
         }
 
         public void ClearUnits(bool clearPlayer, bool clearEnemy)
         {
             if (clearPlayer) _playerUnits.Clear();
             if (clearEnemy) _enemyUnits.Clear();
-            UpdateBoundary();
+            UpdateFrontline();
         }
 
         /// <summary>
-        /// Пересчитывает линию фронта. Алгоритм ищет для каждой строки карты точку равновесия расстояний до ближайших юнитов.
+        /// Глубокая переработка: вычисление карты контроля, извлечение контуров, адаптивное сглаживание
         /// </summary>
-        public void UpdateBoundary()
+        public void UpdateFrontline()
         {
-            _boundaryPoints.Clear();
+            _frontlineSegments.Clear();
+
+            // 🔹 Если юнитов нет — очищаем кэш и уходим
             if (_playerUnits.Count == 0 || _enemyUnits.Count == 0)
-                return;
-
-            var rawPoints = new List<Vector2>();
-
-            // 1. Собираем "сырые" точки равновесия
-            for (int y = 0; y < Height; y++)
             {
-                float bestDiff = float.MaxValue;
-                int bestX = Width / 2;
+                _cachedDefensivePositions.Clear();
+                _defensivePositionsValid = false;
+                return;
+            }
 
-                for (int x = 0; x < Width; x++)
+            // Шаг 1-3: расчёт фронта (без изменений)
+            ComputeTerritoryMap();
+            var rawSegments = ExtractRawContourSegments();
+
+            foreach (var raw in rawSegments)
+            {
+                var filled = FillGaps(raw);
+                var smoothed = AdaptiveSmooth(filled);
+                if (smoothed.Count >= 2)
+                    _frontlineSegments.Add(smoothed);
+            }
+
+            // 🔹 ШАГ 4: Рассчитываем и кэшируем оборонительные позиции
+            _cachedDefensivePositions.Clear();
+
+            int maxPoints = Math.Max(10, _enemyUnits.Count); // Динамическое количество точек
+            foreach (var segment in _frontlineSegments)
+            {
+                for (int i = 0; i < segment.Count; i += Math.Max(1, segment.Count / maxPoints))
+                {
+                    var point = segment[i];
+                    var grid = WorldToGridPosition(point);
+
+                    if (grid.X >= 0 && grid.X < Width && grid.Y >= 0 && grid.Y < Height)
+                    {
+                        var offsetDir = GetDirectionIntoTerritory(point, CellControlState.Player);
+                        var defensiveOffset = offsetDir * TileWidth * 0.5f; // 0.5 тайла вглубь
+                        _cachedDefensivePositions.Add(point + defensiveOffset);
+                    }
+                }
+            }
+
+            // 🔹 Финальная страховка: если пусто — дефолтные позиции
+            if (_cachedDefensivePositions.Count == 0)
+            {
+                _cachedDefensivePositions = new List<Vector2>
+                {
+                    GridToWorldPosition(Width * 3 / 4, Height / 4),
+                    GridToWorldPosition(Width * 3 / 4, Height / 2),
+                    GridToWorldPosition(Width * 3 / 4, Height * 3 / 4)
+                };
+            }
+
+            _defensivePositionsValid = true; // 🔹 Кэш готов!
+        }
+
+        private void ComputeTerritoryMap()
+        {
+            //float contestedThreshold = TileWidth * 1.2f; // Зона "спорной" территории
+            for (int x = 0; x < Width; x++)
+            {
+                for (int y = 0; y < Height; y++)
                 {
                     float pDist = GetNearestDistance(x, y, _playerUnits);
                     float eDist = GetNearestDistance(x, y, _enemyUnits);
-                    float diff = Math.Abs(pDist - eDist);
 
-                    if (diff < bestDiff)
+                    // Убираем присвоение Contested для геометрии фронта
+                    _territoryMap[x, y] = pDist < eDist ? CellControlState.Player : CellControlState.Enemy;
+                }
+            }
+        }
+
+        private List<List<Vector2>> ExtractRawContourSegments()
+        {
+            var segments = new List<List<Vector2>>();
+            var points = new List<Vector2>();
+
+            // Сканируем горизонтальные и вертикальные границы клеток
+            for (int x = 0; x < Width; x++)
+            {
+                for (int y = 0; y < Height; y++)
+                {
+                    var current = _territoryMap[x, y];
+                    if (current == CellControlState.Neutral) continue;
+
+                    // Право
+                    if (x + 1 < Width && _territoryMap[x + 1, y] != current && IsFrontier(current, _territoryMap[x + 1, y]))
+                        points.Add(new Vector2((x + 1) * TileWidth, (y + 0.5f) * TileHeight));
+
+                    // Низ
+                    if (y + 1 < Height && _territoryMap[x, y + 1] != current && IsFrontier(current, _territoryMap[x, y + 1]))
+                        points.Add(new Vector2((x + 0.5f) * TileWidth, (y + 1) * TileHeight));
+                }
+            }
+
+            // Собираем точки в непрерывные цепочки (простой жадный алгоритм по ближайшему соседу)
+            return ClusterIntoChains(points);
+        }
+
+        private bool IsFrontier(CellControlState a, CellControlState b)
+        {
+            // Граница должна быть только там, где контроль меняется напрямую
+            return (a == CellControlState.Player && b == CellControlState.Enemy) ||
+                   (a == CellControlState.Enemy && b == CellControlState.Player);
+        }
+
+        private List<List<Vector2>> ClusterIntoChains(List<Vector2> points)
+        {
+            var chains = new List<List<Vector2>>();
+            var used = new bool[points.Count];
+            float maxGap = TileWidth * 1.5f; // Максимальное расстояние для связки звеньев
+
+            for (int i = 0; i < points.Count; i++)
+            {
+                if (used[i]) continue;
+                var chain = new List<Vector2> { points[i] };
+                used[i] = true;
+                int current = i;
+
+                bool extended = true;
+                while (extended)
+                {
+                    extended = false;
+                    float minDist = float.MaxValue;
+                    int nextIdx = -1;
+
+                    for (int j = 0; j < points.Count; j++)
                     {
-                        bestDiff = diff;
-                        bestX = x;
+                        if (used[j]) continue;
+                        float d = Vector2.DistanceSquared(points[current], points[j]);
+                        if (d < maxGap * maxGap && d < minDist)
+                        {
+                            minDist = d;
+                            nextIdx = j;
+                        }
+                    }
+
+                    if (nextIdx != -1)
+                    {
+                        chain.Add(points[nextIdx]);
+                        used[nextIdx] = true;
+                        current = nextIdx;
+                        extended = true;
                     }
                 }
-                rawPoints.Add(GridToWorldPosition(bestX, y));
+
+                if (chain.Count >= 2) chains.Add(chain);
             }
 
-            // 2. Сглаживаем линию (простое скользящее среднее)
-            const int smoothingWindow = 5; // можно менять от 3 до 7
-            var smoothedPoints = new List<Vector2>();
+            return chains;
+        }
 
-            for (int i = 0; i < rawPoints.Count; i++)
+        /// <summary>
+        /// 2) Убирает жёсткие разрывы: достраивает промежуточные точки между далёкими звеньями
+        /// </summary>
+        private List<Vector2> FillGaps(List<Vector2> raw)
+        {
+            var result = new List<Vector2> { raw[0] };
+            float step = TileWidth * 0.5f;
+
+            for (int i = 1; i < raw.Count; i++)
             {
-                float sumX = 0f;
-                int count = 0;
+                var prev = raw[i - 1];
+                var curr = raw[i];
+                float dist = Vector2.Distance(prev, curr);
 
-                for (int j = -smoothingWindow / 2; j <= smoothingWindow / 2; j++)
+                if (dist > TileWidth * 1.2f)
                 {
-                    int idx = i + j;
-                    if (idx >= 0 && idx < rawPoints.Count)
+                    int steps = (int)Math.Ceiling(dist / step);
+                    for (int s = 1; s < steps; s++)
                     {
-                        sumX += rawPoints[idx].X;
-                        count++;
+                        float t = s / (float)steps;
+                        result.Add(Vector2.Lerp(prev, curr, t));
                     }
                 }
-
-                float smoothedX = sumX / count;
-                float yPos = rawPoints[i].Y;
-
-                smoothedPoints.Add(new Vector2(smoothedX, yPos));
+                result.Add(curr);
             }
+            return result;
+        }
 
-            // 3. Убираем резкие скачки (максимальный шаг по X)
-            float maxStepX = 2.5f * TileWidth; // не даём прыгать больше чем на 2.5 клетки
+        /// <summary>
+        /// 1) Динамическое сглаживание: добавляет больше точек там, где угол изгиба резкий
+        /// </summary>
+        private List<Vector2> AdaptiveSmooth(List<Vector2> input)
+        {
+            var output = new List<Vector2>(input);
+            int maxIterations = 3;
+            float angleThreshold = MathF.PI / 4f; // ~45 градусов
 
-            _boundaryPoints.Add(smoothedPoints[0]);
-
-            for (int i = 1; i < smoothedPoints.Count; i++)
+            for (int iter = 0; iter < maxIterations; iter++)
             {
-                Vector2 prev = _boundaryPoints[^1];
-                Vector2 curr = smoothedPoints[i];
-
-                float dx = curr.X - prev.X;
-
-                // Ограничиваем горизонтальный скачок
-                if (Math.Abs(dx) > maxStepX)
+                var temp = new List<Vector2> { output[0] };
+                for (int i = 1; i < output.Count - 1; i++)
                 {
-                    float limitedX = prev.X + Math.Sign(dx) * maxStepX;
-                    _boundaryPoints.Add(new Vector2(limitedX, curr.Y));
+                    var p0 = output[i - 1];
+                    var p1 = output[i];
+                    var p2 = output[i + 1];
+
+                    Vector2 v1 = p0 - p1;
+                    Vector2 v2 = p2 - p1;
+                    float angle = MathF.Acos(Math.Clamp(Vector2.Dot(v1, v2) / (v1.Length() * v2.Length() + 1e-5f), -1f, 1f));
+
+                    if (angle > angleThreshold)
+                    {
+                        // Вставляем точку сглаживания (Chaikin's corner cutting / простая интерполяция)
+                        var mid1 = Vector2.Lerp(p1, p0, 0.25f);
+                        var mid2 = Vector2.Lerp(p1, p2, 0.25f);
+                        temp.Add(mid1);
+                        temp.Add(p1); // Сохраняем оригинал для стабильности
+                        temp.Add(mid2);
+                    }
+                    else
+                    {
+                        temp.Add(p1);
+                    }
                 }
-                else
+                temp.Add(output[^1]);
+                output = temp;
+            }
+            return output;
+        }
+
+        /// <summary>
+        /// Отрисовка всех сегментов без пропусков. Разрывы больше не игнорируются, а заполнены.
+        /// </summary>
+        public void DrawBoundary(Color color, float thickness = 2.5f)
+        {
+            foreach (var segment in _frontlineSegments)
+            {
+                for (int i = 0; i < segment.Count - 1; i++)
                 {
-                    _boundaryPoints.Add(curr);
+                    RenderSystem.DrawLine(segment[i], segment[i + 1], color, thickness);
                 }
             }
+        }
+
+        public void SubmitPersistentBoundary(Color color, float thickness = 2.5f, int framesToLive = 60)
+        {
+            var snapshot = _frontlineSegments.Select(s => s.ToList()).ToList();
+            RenderSystem.SubmitPersistentCommand(() =>
+            {
+                foreach (var segment in snapshot)
+                {
+                    for (int i = 0; i < segment.Count - 1; i++)
+                    {
+                        RenderSystem.DrawLine(segment[i], segment[i + 1], color, thickness);
+                    }
+                }
+            }, framesToLive, useCamera: true);
         }
 
         private float GetNearestDistance(int tileX, int tileY, List<Vector2> units)
@@ -216,44 +416,54 @@ namespace _2D_Engine_Sokov
             }
             return MathF.Sqrt(minDistSq);
         }
-
         /// <summary>
-        /// Отправляет команды отрисовки границы в RenderSystem. Безопасно вызывать из логики.
+        /// Возвращает ключевые точки для обороны на границе вражеской территории
         /// </summary>
-        public void DrawBoundary(Color color, float thickness = 2.5f)
+        public List<Vector2> GetEnemyDefensivePositions(int maxPoints = 10)
         {
-            if (_boundaryPoints.Count < 2) return;
-
-            for (int i = 0; i < _boundaryPoints.Count - 1; i++)
+            // 🔹 Возвращаем кэш — он уже рассчитан в UpdateFrontline()
+            // Если кэш не валиден — возвращаем дефолтные позиции (на всякий случай)
+            if (!_defensivePositionsValid || _cachedDefensivePositions.Count == 0)
             {
-                var start = _boundaryPoints[i];
-                var end = _boundaryPoints[i + 1];
-
-                // Игнорируем резкие скачки (разрывы в сетке или телепортации юнитов)
-                if (Math.Abs(start.X - end.X) > TileWidth * 2f) continue;
-
-                RenderSystem.DrawLine(start, end, color, thickness);
+                return new List<Vector2>
+                {
+                    GridToWorldPosition(Width * 3 / 4, Height / 2)
+                };
             }
+            return _cachedDefensivePositions;
         }
 
         /// <summary>
-        /// Альтернатива: отрисовка через PersistentCommand, если линию нужно держать на экране без перерасчёта каждый кадр.
+        /// Проверяет, угрожает ли игрок вражеской территории в данной точке
         /// </summary>
-        public void SubmitPersistentBoundary(Color color, float thickness = 2.5f, int framesToLive = 60)
+        public bool IsPlayerThreateningPosition(Vector2 worldPos, float threatRadius = 150f)
         {
-            if (_boundaryPoints.Count < 2) return;
-
-            var pointsSnapshot = _boundaryPoints.ToList();
-            RenderSystem.SubmitPersistentCommand(() =>
+            foreach (var player in _playerUnits)
             {
-                for (int i = 0; i < pointsSnapshot.Count - 1; i++)
-                {
-                    var start = pointsSnapshot[i];
-                    var end = pointsSnapshot[i + 1];
-                    if (Math.Abs(start.X - end.X) > TileWidth * 2f) continue;
-                    RenderSystem.DrawLine(start, end, color, thickness);
-                }
-            }, framesToLive, useCamera: true);
+                if (Vector2.DistanceSquared(worldPos, player) < threatRadius * threatRadius)
+                    return true;
+            }
+            return false;
+        }
+        private Vector2 GetDirectionIntoTerritory(Vector2 frontierPoint, CellControlState targetTerritory)
+        {
+            // Проверяем 4 направления вокруг точки фронта
+            var directions = new[] { Vector2.UnitX, -Vector2.UnitX, Vector2.UnitY, -Vector2.UnitY };
+            float checkDist = TileWidth * 0.6f; // Чуть меньше тайла, чтобы не "перепрыгнуть" границу
+
+            foreach (var dir in directions)
+            {
+                var checkPos = frontierPoint + dir * checkDist;
+                var grid = WorldToGridPosition(checkPos);
+
+                if (grid.X < 0 || grid.X >= Width || grid.Y < 0 || grid.Y >= Height) continue;
+
+                if (_territoryMap[grid.X, grid.Y] == targetTerritory)
+                    return dir; // Нашли направление в нужную территорию
+            }
+
+            // Фоллбэк: используем нормаль к ближайшему юниту врага
+            return Vector2.Normalize(frontierPoint - GridToWorldPosition(Width * 3 / 4, Height / 2));
         }
     }
 }

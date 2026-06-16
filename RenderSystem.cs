@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Concurrent;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
-using Microsoft.Xna.Framework.Content.Pipeline.Graphics;
 using Microsoft.Xna.Framework.Graphics;
 namespace _2D_Engine_Sokov
 {
@@ -176,10 +169,12 @@ namespace _2D_Engine_Sokov
                 {
                     if (!_uiElements.Contains(element))
                     {
+
                         _uiElements.Add(element);
                     }
                 }
             }
+           // Console.WriteLine(_uiElements.Count);
         }
         // Добавляем метод для удаления UI элементов
         public static void RemoveUIElement(UIElement element)
@@ -243,7 +238,40 @@ namespace _2D_Engine_Sokov
                     color);
             });
         }
+        // === НОВЫЕ МЕТОДЫ ДЛЯ ОТРИСОВКИ UI-ПРИМИТИВОВ (без камеры) ===
 
+        public static void FillRectangleUI(Rectangle rect, Color color)
+        {
+            _drawCommandsOffCamera.Enqueue(() => {
+                _spriteBatch.Draw(_pixelTexture, rect, color);
+            });
+        }
+
+        public static void DrawRectangleUI(Rectangle rect, Color color, float thickness = 1f)
+        {
+            DrawLineUI(new Vector2(rect.X, rect.Y), new Vector2(rect.X + rect.Width, rect.Y), color, thickness);
+            DrawLineUI(new Vector2(rect.X + rect.Width, rect.Y), new Vector2(rect.X + rect.Width, rect.Y + rect.Height), color, thickness);
+            DrawLineUI(new Vector2(rect.X + rect.Width, rect.Y + rect.Height), new Vector2(rect.X, rect.Y + rect.Height), color, thickness);
+            DrawLineUI(new Vector2(rect.X, rect.Y + rect.Height), new Vector2(rect.X, rect.Y), color, thickness);
+        }
+
+        public static void DrawLineUI(Vector2 start, Vector2 end, Color color, float thickness = 1f)
+        {
+            _drawCommandsOffCamera.Enqueue(() => {
+                var angle = (float)Math.Atan2(end.Y - start.Y, end.X - start.X);
+                var length = Vector2.Distance(start, end);
+                _spriteBatch.Draw(
+                    _pixelTexture,
+                    start,
+                    null,
+                    color,
+                    angle,
+                    Vector2.Zero,
+                    new Vector2(length, thickness),
+                    SpriteEffects.None,
+                    0.5f);
+            });
+        }
         public static void DrawCircle(Vector2 center, float radius, Color color, int segments = 16, float thickness = 1f)
         {
             Vector2[] points = new Vector2[segments];
@@ -339,8 +367,6 @@ namespace _2D_Engine_Sokov
 
             protected override void Update(GameTime gameTime)
             {
-
-                // Безопасно выполняем все отложенные GPU-задачи
                 while (_renderQueue.TryDequeue(out var action))
                 {
                     try { action(); }
@@ -367,8 +393,9 @@ namespace _2D_Engine_Sokov
                 lock (_bufferLock)
                 {
                     renderList = _currentRenderList;
-                    uiList = new List<UIElement>(_uiElements);
 
+                    uiList = new List<UIElement>(_uiElements);
+                   // Console.WriteLine(uiList.Count);
                     var temp = _currentRenderList;
                     _currentRenderList = _nextFrameList;
                     _nextFrameList = temp;
@@ -376,14 +403,14 @@ namespace _2D_Engine_Sokov
                 }
 
                 _graphicsDevice.Clear(backgroundColor);
+
                 _spriteBatch.Begin(
-                    SpriteSortMode.Deferred,          // Сортировка отключена, порядок = порядку вызовов
+                    SpriteSortMode.Deferred,
                     BlendState.AlphaBlend,
                     SamplerState.PointClamp,
                     null, null, null,
-                    _camera?.TransformMatrix          // Матрица камеры применяется один раз
+                    null // ВАЖНО: Матрица трансформации отсутствует! UI будет статичен.
                 );
-
                 if (_backgrounds.Count > 0)
                 {
                     foreach (var element in _backgrounds.OrderBy(e => e.LayerDepth))
@@ -403,30 +430,40 @@ namespace _2D_Engine_Sokov
                         );
                     }
                 }
-
-                foreach (var sprite in renderList.OrderBy(s => s.LayerDepth))
+                _spriteBatch.End();
+                _spriteBatch.Begin(
+                    SpriteSortMode.Deferred,          // Сортировка отключена, порядок = порядку вызовов
+                    BlendState.AlphaBlend,
+                    SamplerState.PointClamp,
+                    null, null, null,
+                    _camera?.TransformMatrix          // Матрица камеры применяется один раз
+                );
+                try
                 {
-                    if (sprite.Texture == null || !sprite.IsActive) continue;
-
-                    // Проверка видимости только если включено отсечение
-                    if (_camera != null && _camera.FrustumCullingEnabled && !sprite.IsVisible(_camera))
+                    foreach (var sprite in renderList.OrderBy(s => s.LayerDepth))
                     {
-                        //Console.WriteLine(sprite.Tag);
-                        continue;
-                    }
-                    _spriteBatch.Draw(
-                        texture: sprite.Texture,
-                        position: sprite.Position,
-                        sourceRectangle: sprite.SourceRectangle,
-                        color: sprite.Color,
-                        rotation: sprite.Rotation,
-                        origin: sprite.Origin,
-                        scale: sprite.Scale,
-                        effects: sprite.Effects,
-                        layerDepth: sprite.LayerDepth
-                    );
-                }
+                        if (sprite.Texture == null || !sprite.IsActive) continue;
 
+                        // Проверка видимости только если включено отсечение
+                        if (_camera != null && _camera.FrustumCullingEnabled && !sprite.IsVisible(_camera))
+                        {
+                            //Console.WriteLine(sprite.Tag);
+                            continue;
+                        }
+                        _spriteBatch.Draw(
+                            texture: sprite.Texture,
+                            position: sprite.Position,
+                            sourceRectangle: sprite.SourceRectangle,
+                            color: sprite.Color,
+                            rotation: sprite.Rotation,
+                            origin: sprite.Origin,
+                            scale: sprite.Scale,
+                            effects: sprite.Effects,
+                            layerDepth: sprite.LayerDepth
+                        );
+                    }
+                }
+                catch { }
                 // 🔑 ИЗМЕНЕНИЕ 1: Сначала обрабатываем persistent-команды
                 lock (_persistentCommandsLock)
                 {
@@ -446,6 +483,15 @@ namespace _2D_Engine_Sokov
                 {
                     command.Invoke();
                 }
+                _spriteBatch.End();
+                _spriteBatch.Begin(
+                    SpriteSortMode.Deferred,
+                    BlendState.AlphaBlend,
+                    SamplerState.PointClamp,
+                    null, null, null,
+                    null // ВАЖНО: Матрица трансформации отсутствует! UI будет статичен.
+                );
+
                 if (uiList.Count > 0)
                 {
 
@@ -453,6 +499,7 @@ namespace _2D_Engine_Sokov
                     foreach (var element in uiList.OrderBy(e => e.LayerDepth))
                     {
                         if (element.Texture == null || !element.IsActive) continue;
+
                         var sourceRect = element.SourceRectangle ?? new Rectangle(0, 0, element.Texture.Width, element.Texture.Height);
                         _spriteBatch.Draw(
                             texture: element.Texture,
@@ -463,10 +510,11 @@ namespace _2D_Engine_Sokov
                             origin: element.Origin,
                             scale: element.Scale,
                             effects: element.Effects,
-                            layerDepth: element.LayerDepth
+                            layerDepth: 1f
                         );
                     }
- 
+                    // Закрываем батч UI
+
                 }
                 lock (_persistentCommandsLock)
                 {

@@ -55,7 +55,7 @@ namespace _2D_Engine_Sokov
         ~GameObject()
         {
             try { 
-            Game.DisposeObject(this);
+            GameContext.RemoveGameObject(this);
             }
             catch { Console.WriteLine("Ошибка"); }
         }

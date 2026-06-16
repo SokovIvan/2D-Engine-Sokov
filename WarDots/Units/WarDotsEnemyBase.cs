@@ -22,7 +22,6 @@ namespace _2D_Engine_Sokov.WarDots.Units
         public override void Start()
         {
             base.Start();
-
         }
 
         public override void Update(double deltaTime)

@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.Xna.Framework;
-using System.Text;
-using System.Threading.Tasks;
-using _2D_Engine_Sokov.GameObjects;
-
-namespace _2D_Engine_Sokov.UIElements
+﻿namespace _2D_Engine_Sokov.UIElements
 {
     internal class IntermediaController : UIElement
     {
@@ -56,9 +48,6 @@ namespace _2D_Engine_Sokov.UIElements
                 }
 
             }
-
-
-
         }
     }
 }

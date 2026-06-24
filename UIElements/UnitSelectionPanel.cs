@@ -11,7 +11,7 @@ namespace _2D_Engine_Sokov.UIElements
     public class UnitSelectionPanel : UIElement
     {
         private List<WarDotsPlayerDivision> _currentSelection = new();
-        private const int IconSize = 32;
+        private const int IconSize = 35;
         private const int Padding = 5;
 
         public UnitSelectionPanel()
@@ -65,9 +65,9 @@ namespace _2D_Engine_Sokov.UIElements
             {
                 Rectangle iconRect = new Rectangle((int)currentX, (int)currentY, IconSize, IconSize);
 
-                RenderSystem.FillRectangleUI(iconRect, new Color(((unit.MaxHealth - unit.Health)/ unit.MaxHealth)*255, 150, 0, 200)); // Зелёная подложка
+                RenderSystem.FillRectangleUI(iconRect, new Color(((unit.MaxHealth - unit.Health)/ unit.MaxHealth)*255, 150, 0, 200)); //  подложка
                 RenderSystem.DrawRectangleUI(iconRect, Color.White, 2f); // Белая рамка
-                RenderSystem.DrawText(RenderSystem.GetDefaultFont(), "♥" + unit.Health + "/" + unit.MaxHealth, new Vector2(currentX, currentY + 8), Color.Red, 0.8f, useCamera: false);
+                RenderSystem.DrawText(RenderSystem.GetDefaultFont(), ((unit.Health/unit.MaxHealth)*100).ToString() + "%", new Vector2(currentX, currentY + 8), Color.Red, 0.8f, useCamera: false);
 
                 currentX += IconSize + Padding;
             }

@@ -69,12 +69,9 @@ namespace _2D_Engine_Sokov
         }
         public static void DisposeUIElement(UIElement uIElement)
         {
-            if (instance._UIElements.Contains(uIElement)) {
-                //UISystem.UnregisterUIElement(uIElement);
-                instance._UIElements.Remove(uIElement);
+            if (instance == null) return;
+			if(instance._UIElements.Remove(uIElement))
                 RenderSystem.RemoveUIElement(uIElement);
-            }
-
         }
         public static void SubmitObject(GameObject gameObject) {
             instance._gameObjects.AddLast(gameObject);

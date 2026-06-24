@@ -12,7 +12,8 @@ namespace _2D_Engine_Sokov.WarDots
         private static Vector2 _selStart, _selEnd;
         private static bool _isSelecting;
 
-        private static Type _buildType;
+		private static bool clickOnButton = false;
+		private static Type _buildType;
         private static bool _isPlacing;
         private static int _previousScrollValue = 0;
         public static void Initialize()
@@ -64,6 +65,10 @@ namespace _2D_Engine_Sokov.WarDots
             else if (mouse.LeftButton == ButtonState.Released && _isSelecting)
             {
                 _isSelecting = false;
+                if (_selectedUnits.Count > 0) {                    
+					foreach (var u in _selectedUnits) 
+                        u?.selected = false;
+				}
                 _selectedUnits.Clear();
 
                 float minX = Math.Min(_selStart.X, _selEnd.X);
@@ -95,7 +100,10 @@ namespace _2D_Engine_Sokov.WarDots
                             selected = true;
                     }
 
-                    if (selected) _selectedUnits.Add(u);
+                    if (selected) {
+                        _selectedUnits.Add(u); 
+                        u.selected = true;
+                    }
                 }
 
                 _selStart = _selEnd = Vector2.Zero;
@@ -128,7 +136,7 @@ namespace _2D_Engine_Sokov.WarDots
             var cam = RenderSystem.GetCamera();
             if (cam == null || !_isPlacing) return;
 
-            var mouse = Mouse.GetState();
+			var mouse = Mouse.GetState();
             var world = Vector2.Transform(new Vector2(mouse.X, mouse.Y), Matrix.Invert(cam.TransformMatrix));
 
             // Проверяем пригодность места в реальном времени
@@ -171,18 +179,16 @@ namespace _2D_Engine_Sokov.WarDots
                 bool isNear = false;
                 foreach (var b in playerBuildings)
                 {
-                    // DistanceSquared быстрее и безопаснее для превью
                     if (Vector2.DistanceSquared(b.Position, worldPos) <= maxBuildDistance * maxBuildDistance)
                     {
                         isNear = true;
                         break;
                     }
                 }
-                // Если построек нет, разрешаем (первая база). Если есть, но далеко - запрет.
+
                 if (!isNear) return false;
             }
 
-            // Если все условия выполнены - меняем на нежно-зелёный
             color = new Color(0, 255, 0, 110);
             return true;
         }
@@ -190,7 +196,15 @@ namespace _2D_Engine_Sokov.WarDots
         private static void HandleCommands()
         {
             var mouse = InputSystem.GetMouseState();
-            if (mouse.RightButton == ButtonState.Pressed)
+
+            if (mouse.LeftButton == ButtonState.Pressed && !clickOnButton)
+            {
+                if (_isPlacing && _buildType != null)
+                {
+					_isPlacing = false;
+				}
+			}
+			if (mouse.RightButton == ButtonState.Pressed)
             {
                 var cam = RenderSystem.GetCamera();
                 var world = Vector2.Transform(new Vector2(mouse.X, mouse.Y), Matrix.Invert(cam.TransformMatrix));
@@ -203,13 +217,24 @@ namespace _2D_Engine_Sokov.WarDots
 
                 else if (_selectedUnits.Count > 0)
                 {
+                    var kb = InputSystem.GetKeyboardState();
+                    bool shiftDown = kb.IsKeyDown(Keys.LeftShift) || kb.IsKeyDown(Keys.RightShift);
+
                     Vector2 offset = Vector2.Zero;
                     foreach (var u in _selectedUnits)
                     {
-                        // 🔥 Запускаем расчёт в фоне!
-                        u.PathTask = Pathfinding.FindPathAsync(tileMap, u.Position, world + offset);
-                        // Очищаем старый путь, чтобы юнит не метался, пока считается новый
-                        u.Path.Clear();
+                        if (shiftDown)
+                        {
+                            // В режиме Shift добавляем цель в очередь (points) не прерывая текущий путь
+                            u.points.Add(world + offset);
+                        }
+                        else
+                        {
+                            // Обычная команда перемещения — прерываем очередь и ставим новый путь
+                            u.points.Clear();
+                            u.PathTask = Pathfinding.FindPathAsync(tileMap, u.Position, world + offset);
+                            u.Path.Clear();
+                        }
 
                         offset += new Vector2(18f, 18f);
                     }
@@ -220,6 +245,7 @@ namespace _2D_Engine_Sokov.WarDots
 
         public static void RequestPlacement(Type buildingType)
         {
+
             _buildType = buildingType;
             _isPlacing = true;
         }
@@ -308,5 +334,7 @@ namespace _2D_Engine_Sokov.WarDots
         }
         // Добавь это в конец класса WarDotsPlayerController, чтобы UI мог читать выбор
         public static IReadOnlyList<WarDotsPlayerDivision> SelectedUnits => _selectedUnits;
-    }
+
+		public static bool ClickOnButton { get => clickOnButton; set => clickOnButton = value; }
+	}
 }

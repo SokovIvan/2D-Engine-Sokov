@@ -1,6 +1,8 @@
-﻿using System.Collections.Concurrent;
+﻿using _2D_Engine_Sokov.WarDots;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.Collections.Concurrent;
+
 namespace _2D_Engine_Sokov
 {
     public class RenderSystem
@@ -102,7 +104,8 @@ namespace _2D_Engine_Sokov
             _backgrounds.AddRange(backgrounds);
         }
 
-        public static void Initialize(int width, int height)
+
+		public static void Initialize(int width, int height)
         {
             _isRunning = true;
             new Thread(() =>
@@ -116,10 +119,15 @@ namespace _2D_Engine_Sokov
                     SynchronizeWithVerticalRetrace = true
                 };
                 graphics.ApplyChanges();
-                _graphicsDevice = graphics.GraphicsDevice;
+                _game.Window.IsBorderless = true;
+				_game.Window.Title = "MachineCommander";
 
 
-                _camera = new Camera(new Viewport(0, 0, width, height));
+
+				_graphicsDevice = graphics.GraphicsDevice;
+
+
+				_camera = new Camera(new Viewport(0, 0, width, height));
                 _game.Run();
             })
             {
@@ -344,10 +352,10 @@ namespace _2D_Engine_Sokov
             private readonly int _width;
             private readonly int _height;
 
-            public RenderGame(int width, int height)
+			public RenderGame(int width, int height)
             {
-
-                _width = width;
+			
+				_width = width;
                 _height = height;                
             }
 
@@ -355,13 +363,17 @@ namespace _2D_Engine_Sokov
             {                
                 _spriteBatch = new SpriteBatch(_graphicsDevice);
                 IsMouseVisible = true;
-                TextureManager.Initialize(_graphicsDevice);
+				
+				TextureManager.Initialize(_graphicsDevice);
 
                 _pixelTexture = new Texture2D(_graphicsDevice, 1, 1);
                 _pixelTexture.SetData(new[] { Color.White });
 
-                _defaultFont = RuntimeFontGenerator.CreateFont(_graphicsDevice);             
-                base.Initialize();
+                _defaultFont = RuntimeFontGenerator.CreateFont(_graphicsDevice);
+
+
+
+				base.Initialize();
 
             }
 

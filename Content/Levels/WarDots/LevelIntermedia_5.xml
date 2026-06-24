@@ -9,7 +9,7 @@
 		Position="0,0"
 		Size="1280,720"
 		Color="175,125,125"
-		FontSize="24" />
+		FontSize="40" />
 
 
 		<Component Text="Теперь когда все наши силы собраны, тактика остаётся на ваше усмотрении, комбинируйте войска и вытесните противника. Но будьте осторожны противник обладает большими резервами."
@@ -17,14 +17,14 @@
 		Position="0,0"
 		Size="1280,720"
 		Color="100,175,175"
-		FontSize="24"/>
+		FontSize="40"/>
 
 		<Component Text=""
 		Texture="Content/Textures/Assistant_0.png"
 		Position="0,0"
 		Size="1280,720"
 		Color="125,125,200"
-		FontSize="24"/>
+		FontSize="40"/>
 		
 	</UIElement>
 

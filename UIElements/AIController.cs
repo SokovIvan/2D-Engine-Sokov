@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using _2D_Engine_Sokov.GameObjects;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content.Pipeline.Graphics;
+﻿using _2D_Engine_Sokov.GameObjects;
 
 namespace _2D_Engine_Sokov.UIElements
 {

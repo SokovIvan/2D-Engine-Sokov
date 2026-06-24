@@ -73,11 +73,5 @@ namespace _2D_Engine_Sokov.WarDots.Units
             }
         }
 
-        private void DrawHeightDependent()
-        {
-            Altitude = RenderSystem.GetCamera().Zoom;
-
-            
-        }
     }
 }

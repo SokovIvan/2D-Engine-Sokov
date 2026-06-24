@@ -1,23 +1,19 @@
 ﻿using _2D_Engine_Sokov.GameObjects;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.Xna.Framework;
 
 namespace _2D_Engine_Sokov.WarDots.Units
 {
     public class WarDotsPlayerFactory : WarDotsBuilding
     {
         public int UnitProductionCost { get; set; } = 25;
-        public WarDotsPlayerFactory() {
+        public Vector2 SpawnTarget { get; set; } = Vector2.One;
+		public WarDotsPlayerFactory() {
             Tag = "Player";
             Health = 320f;
             ProducingTime = 6.5f;
             MaxQueueSize = 4;
-
-
-        }
+			SpawnTarget = new Vector2(Position.X+Size.X, Position.Y+Size.Y);
+		}
         public override void Start()
         {
             base.Start();
@@ -29,7 +25,8 @@ namespace _2D_Engine_Sokov.WarDots.Units
             {
                 div.Tag = "Player";
                 div.Size = new Microsoft.Xna.Framework.Vector2(32, 32);
-            }
+				div.PathTask = Pathfinding.FindPathAsync(GameContext.TileMap, div.Position, SpawnTarget);
+			}
 
         }
 

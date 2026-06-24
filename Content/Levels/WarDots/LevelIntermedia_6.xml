@@ -9,7 +9,7 @@
 		Position="0,0"
 		Size="1280,720"
 		Color="125,125,125"
-		FontSize="24" />
+		FontSize="40" />
 
 
 		<Component Text="Однако война ещё не окончена, теперь она выходит на стратегический уровень и ваши навыки скоро опять пригодятся."
@@ -17,14 +17,14 @@
 		Position="0,0"
 		Size="1280,720"
 		Color="200,125,200"
-		FontSize="24"/>
+		FontSize="40"/>
 
 		<Component Text="Сейчас же есть время для отдыха, Вы это заслужили! Как ваш ассистент я продолжу быть с Вами!"
 		Texture="Content/Textures/Assistant_0.png"
 		Position="0,0"
 		Size="1280,720"
 		Color="125,200,125"
-		FontSize="24"/>
+		FontSize="40"/>
 	
 	</UIElement>
 	<UIElement Type="WarDotsIntermediaController" NextLevel="Content/Levels/WarDots/LevelMenu.xml" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>

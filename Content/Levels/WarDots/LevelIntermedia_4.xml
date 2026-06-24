@@ -9,28 +9,28 @@
 		Position="0,0"
 		Size="1280,720"
 		Color="125,200,125"
-		FontSize="24" />
+		FontSize="40" />
 
 		<Component Text="Теперь нуступила наша очередь атаковать, танки уже размещены на позициях для атаки, однако стоит опасаться артиллерийских позиций врага. "
 		Texture="Content/Textures/Assistant_0.png"
 		Position="0,0"
 		Size="1280,720"
 		Color="225,125,125"
-		FontSize="24"/>
+		FontSize="40"/>
 
 		<Component Text="Внимательно следите за местностью при передвижении и атакуйте дивизии с незащищённых сторон."
 		Texture="Content/Textures/Assistant_0.png"
 		Position="0,0"
 		Size="1280,720"
 		Color="125,125,125"
-		FontSize="24"/>
+		FontSize="40"/>
 
 		<Component Text="На данный момент вам доступны все виды войск, которые у нас есть на данный момент, без сомнения, у вас получится!"
 		Texture="Content/Textures/Assistant_0.png"
 		Position="0,0"
 		Size="1280,720"
 		Color="125,125,200"
-		FontSize="24"/>
+		FontSize="40"/>
 		
 	</UIElement>
 

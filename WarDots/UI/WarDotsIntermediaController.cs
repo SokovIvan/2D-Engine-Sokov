@@ -25,12 +25,12 @@ namespace _2D_Engine_Sokov.WarDots.UI
             if (educ_anim_completed)
             {
                 timer += deltaTime;
-                if (timer > 5)
+                if (timer > 1)
                 {
                     if (GameContext.GetUIElements().OfType<Animation>().ToArray().Length == 0 && educ_anim_completed)
                     {
                         checkTimes += 1;
-                        if (!load && checkTimes > 10)
+                        if (!load && checkTimes > 5)
                         {
                             load = true;
                             WarDotsGame.Instance.LoadLevel(NextLevel);

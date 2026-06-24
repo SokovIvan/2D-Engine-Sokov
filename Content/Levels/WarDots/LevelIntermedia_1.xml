@@ -16,31 +16,31 @@
 		Position="0,0"
 		Size="1280,720"
 		Color="175,125,125"
-		FontSize="24" />
+		FontSize="40" />
 		<Component Text="В вашем распоряжении будут пехотные дивизии. Они примерно равны по мощности с дивизиями противника. Выстройте на карте линию фронта с опомщью них."
 		Texture="Content/Textures/Assistant_0.png"
 		Position="0,0"
 		Size="1280,720"
-		Color="200,125,125"
-		FontSize="24"/>
+		Color="125,125,175"
+		FontSize="40"/>
 		<Component Text="Также вам будут доступны генераторы ресурсов и пехотные заводы, производящие клон-пехоту. Вызывайте их с помощью кнопок на вашем ПТК - персональной тактической консоли."
 		Texture="Content/Textures/Assistant_0.png"
 		Position="0,0"
 		Size="1280,720"
-		Color="225,125,125"
-		FontSize="24"/>
+		Color="125,175,125"
+		FontSize="40"/>
 		<Component Text="ПТК должен быть вам знаком, однаком ещё раз напомним вам основы. Для выбора дивизий используйте мышь, зажимайте левую кнопку мыши для выделения дивизий рамкой и правую - для указания места сбора."
 		Texture="Content/Textures/Assistant_0.png"
 		Position="0,0"
 		Size="1280,720"
-		Color="250,125,125"
-		FontSize="24"/>
+		Color="200,200,200"
+		FontSize="40"/>
 		<Component Text="Враг уже появился в секторе. Удачи, командующий!"
 		Texture="Content/Textures/Assistant_0.png"
 		Position="0,0"
 		Size="1280,720"
-		Color="250,125,125"
-		FontSize="24"/>
+		Color="100,125,100"
+		FontSize="40"/>
 	</UIElement>
 	<UIElement Type="WarDotsIntermediaController" NextLevel="Content/Levels/WarDots/Level_1.xml" Position="0,0" Size="1,1" Color="0,0,0" Texture="Content/Textures/im1.png" IsActive="true"/>
 
